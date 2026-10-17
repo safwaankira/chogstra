@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# env files
+.env
+.env.*
+!.env.example
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+
+# Next.js
+.next/
+*.tsbuildinfo
+next-env.d.ts
+
+# misc
+.DS_Store
+.claude/settings.local.json
