@@ -52,11 +52,20 @@ Solo vibecoded build for Chogathon 2026 (14-day sprint). Same repo will be poste
 - MockChog.sol on testnet only, same tokenIds, for the sandbox.
 
 ## Sound design
-- Dump all 1,969 tokenURI JSONs once to /data/chogs.json. Never fetch IPFS live in the app.
-- Deterministic trait → sound map in `lib/mapping.ts`:
-  Body → instrument family, Eyes → octave/range, Mouth → timbre, Aura → effect, Background → pan/room, Tier → volume/solo eligibility.
-- Every Movement locks notes to one scale (pentatonic/modal) so anything sounds good.
-- Master limiter on output. Audio only starts after a user tap.
+- Metadata for all 1,969 Chogs is dumped once to `web/data/chogs.json` by `web/scripts/dump-chogs.ts` (trait counts in `web/data/traits-summary.md`). Never fetch metadata from IPFS live in the app. Portrait images still load from an IPFS gateway (Filebase).
+- Deterministic trait → sound map in `web/lib/mapping.ts`. All keyword groupings are tables at the top of that file; every Chog gets a complete sound (fallbacks for missing traits).
+  - Skin → band role: Pink = melody, Origin = chords, Red/Black = bass, Yellow + rare skins = drums (~28/27/28/16%). Not Base: 94.9% of Chogs are Base "Origin".
+  - Base → flavour: Skull = spooky (detuned twin + vibrato), Radioactive = glitch (bit-crush). Form "Skull" is always Base "Skull", so Form isn't mapped separately.
+  - Tier → volume and Spotlight weight (1/2/4/8/16); Rare adds an octave layer, Epic a harmony layer, Legendary both.
+  - Eyes → pitch range (low/mid/high). Mouth → note shape (short/medium/long; missing = medium).
+  - Body → tone colour family (meme, costume, outlaw, mystic, regal, street; missing = "bare", the role's plain default).
+  - Head → filter brightness (dark/warm/bright/sparkling). Aura → effect (distortion, echo, chorus, shimmer, phaser; missing or "Clean" = dry).
+  - Background → reverb room (small/medium/large/hall). Side → pan left/right. Accessory → bell/chime/glass sparkle layer.
+  - The ten 1:1 Legendaries (only Base + Tier traits) get hand-designed signatures in `LEGENDARY_SIGNATURES`.
+- Pattern format (`web/lib/music.ts`, same as the contract): step i = bits [4i, 4i+3]; bit 3 on/off, bits 0–2 scale degree 0–7. For drums the degree picks the drum (kick, snare, hat, tom, open hat).
+- Every Movement locks notes to one scale (pentatonic/modal) so anything sounds good. `/lab` uses C minor pentatonic at 90 bpm.
+- Audio engine in `web/lib/engine.ts` (Tone.js), loaded only after a user tap. Master limiter on output; shared reverb buses per room size.
+- `/lab` is the sound test page: Random band (4 Chogs per role, random test loops) and "Hear alone" by token ID. Its loops are random and labelled as not onchain.
 
 ## Design
 - Use the Impeccable skill (`/impeccable init` creates product.md and design.md).
