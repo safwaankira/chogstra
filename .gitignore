@@ -19,3 +19,6 @@ next-env.d.ts
 # misc
 .DS_Store
 .claude/settings.local.json
+
+# local dev chain (scripts/dev-chain.sh)
+.dev-chain/

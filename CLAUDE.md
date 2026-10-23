@@ -73,6 +73,18 @@ Solo vibecoded build for Chogathon 2026 (14-day sprint). Same repo will be poste
 - Anti-references: gradient SaaS heroes, generic cards, emoji headings, lorem ipsum.
 - Main Stage fits one viewport, desktop and mobile.
 
+## Local dev
+Everything runs on this Mac. Nothing is sent to Monad.
+- `scripts/dev-chain.sh`: starts anvil forking Monad mainnet at a fixed block (`FORK_BLOCK`, default 115840000) as chain id 31337 on port 8545, and leaves it running in the background. It then:
+  - deploys `MockEntropyV2` (local randomness, dev only) and Chogstra via `contracts/script/Deploy.s.sol`, pointing at the REAL Chog Genesis and $CHOG contracts, with startTime = the fork's current time;
+  - uses anvil impersonation to move real Chogs into anvil's test accounts: #0 gets Halo (1667, Legendary), the first Skull and the first Common from `web/data/chogs.json` (61 and 3 at the default block); #1 gets the next Common (4);
+  - moves real $CHOG from a large holder (10,000 to #0, 2,000 to #1) for testing tips;
+  - writes addresses and tokenIds to `web/.env.local` (`NEXT_PUBLIC_*`) and `contracts/.env.local`, inside a marked block so other lines survive. Both files are gitignored.
+- `scripts/dev-chain.sh stop`: stops anvil. Its state and log are in `.dev-chain/` (gitignored).
+- `scripts/dev-next-day.sh`: +24h. `--close` also closes the movement that just ended and delivers a random mock Entropy seed. `--spotlight` also resolves its Spotlight.
+- `contracts/script/Deploy.s.sol` reads `CHOG_NFT`, `CHOG_TOKEN`, `ENTROPY` and `START_TIME` from the environment. On the fork, send transactions with `cast send --unlocked --from <anvil account>`. Anvil prints its public test keys when it starts.
+- Anvil runs Ethereum gas rules. Monad charges more for cold storage and account access (see the gas skill), so treat local gas numbers as a lower bound.
+
 ## Build order
 1. Contracts + tests on testnet with MockChog.
 2. Metadata dump + sound prototype (must sound good before UI work).
