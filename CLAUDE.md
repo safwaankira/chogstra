@@ -12,6 +12,7 @@ Solo vibecoded build for Chogathon 2026 (14-day sprint). Same repo will be poste
 
 ## Hard rules
 - LOCAL ONLY. Never add a git remote, push, create a GitHub repo, or deploy anywhere (Vercel etc.) unless I explicitly say so in that session. Git is used locally for history only.
+- RATE LIMIT: at most 2 outward actions per rolling hour, combined: `git push`, PRs, releases and deploys. Check `git reflog show refs/remotes/origin/master --date=iso` and `vercel ls chogstra` first; at the cap, wait and batch commits into the next push. (My account was banned before over rapid automated pushes.) Local commits are unlimited.
 - Always start Monad work with the `monskill` routing skill (Monskills plugin).
 - Never fake data. No placeholder arrays, no hardcoded results, no success toast without a real transaction. Judges click everything twice.
 - One screen, three states: Spectate (no Chog) → Compose (has Chog) → Result (performed, share card).
