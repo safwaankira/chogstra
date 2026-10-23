@@ -1,9 +1,9 @@
 // Every read the hall makes from the chain. Nothing here is invented: each value
 // comes from Chogstra, Chog Genesis or $CHOG via the RPC.
 
-import { BaseError, ContractFunctionRevertedError, type Address, type PublicClient } from "viem";
+import { BaseError, ContractFunctionRevertedError, encodeAbiParameters, keccak256, type Address, type PublicClient } from "viem";
 import { chogstraAbi } from "./abi/chogstra";
-import { ADDRESSES, DEPLOY_BLOCK, LOG_RANGE, erc20Abi, erc721Abi } from "./chain";
+import { ADDRESSES, erc20Abi, erc721Abi } from "./chain";
 import { CHOG_COUNT } from "./chogs";
 import { DEFAULT_SETTING, type Setting } from "./music";
 
@@ -38,59 +38,53 @@ export async function readSetting(client: PublicClient, movement: number): Promi
   }
 }
 
-/** Block ranges from the deploy block to now, sized for the RPC's eth_getLogs limit. */
-async function logRanges(client: PublicClient): Promise<[bigint, bigint][]> {
-  // cacheTime 0: an event just told us a new block exists, so never reuse a cached height.
-  const latest = await client.getBlockNumber({ cacheTime: 0 });
-  const ranges: [bigint, bigint][] = [];
-  for (let from = DEPLOY_BLOCK; from <= latest; from += LOG_RANGE) {
-    const to = from + LOG_RANGE - BigInt(1);
-    ranges.push([from, to < latest ? to : latest]);
-  }
-  return ranges;
+const ALL_IDS = Array.from({ length: CHOG_COUNT }, (_, i) => i + 1);
+const STATE_BATCH = 300;
+
+function batches<T>(items: T[], size = STATE_BATCH): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
 }
 
-/** tokenIds with a Performed event in this movement. */
+// No log scans: public Monad RPCs cap eth_getLogs at 100 blocks (about 40 seconds),
+// so everything below reads contract state through Multicall3 instead. That works on
+// any chain with no indexer, at a few eth_calls per read.
+
+/** parts[] for every Chog (1..1969). Chogs that never performed have updatedBlock 0 and are left out. */
+export async function readAllParts(client: PublicClient): Promise<Map<number, OnchainPart>> {
+  const all = new Map<number, OnchainPart>();
+  for (const ids of batches(ALL_IDS)) for (const [id, p] of await readParts(client, ids)) all.set(id, p);
+  return all;
+}
+
+/** tokenIds whose current part was written in this movement. */
 export async function readPerformerIds(client: PublicClient, movement: number): Promise<number[]> {
-  const ids = new Set<number>();
-  for (const [fromBlock, toBlock] of await logRanges(client)) {
-    const logs = await client.getContractEvents({
-      address: chogstra(),
-      abi: chogstraAbi,
-      eventName: "Performed",
-      args: { movement },
-      fromBlock,
-      toBlock,
-    });
-    for (const log of logs) if (log.args.tokenId !== undefined) ids.add(Number(log.args.tokenId));
-  }
-  return [...ids];
+  return [...(await readAllParts(client)).values()].filter((p) => p.movement === movement).map((p) => p.tokenId);
 }
 
-/** Every tokenId that has ever performed (Performed events across all movements). */
+/** Every tokenId that has ever performed. */
 export async function readAllPerformerIds(client: PublicClient): Promise<number[]> {
-  const ids = new Set<number>();
-  for (const [fromBlock, toBlock] of await logRanges(client)) {
-    const logs = await client.getContractEvents({ address: chogstra(), abi: chogstraAbi, eventName: "Performed", fromBlock, toBlock });
-    for (const log of logs) if (log.args.tokenId !== undefined) ids.add(Number(log.args.tokenId));
-  }
-  return [...ids];
+  return [...(await readAllParts(client)).keys()];
 }
 
-/** Chogs currently lent to `who`: Delegated events naming them, confirmed live with canPerform (expiry and owner checked onchain). */
+/** Chogs `who` may perform but doesn't own: canPerform for every Chog (live expiry and owner checks onchain). */
 export async function readLentToMe(client: PublicClient, who: Address): Promise<number[]> {
-  const ids = new Set<number>();
-  for (const [fromBlock, toBlock] of await logRanges(client)) {
-    const logs = await client.getContractEvents({ address: chogstra(), abi: chogstraAbi, eventName: "Delegated", args: { to: who }, fromBlock, toBlock });
-    for (const log of logs) if (log.args.tokenId !== undefined) ids.add(Number(log.args.tokenId));
+  const lent: number[] = [];
+  for (const ids of batches(ALL_IDS)) {
+    const [can, owners] = await Promise.all([
+      client.multicall({
+        contracts: ids.map((id) => ({ address: chogstra(), abi: chogstraAbi, functionName: "canPerform", args: [who, BigInt(id)] }) as const),
+        allowFailure: true,
+      }),
+      readOwners(client, ids),
+    ]);
+    ids.forEach((id, i) => {
+      const r = can[i];
+      if (r.status === "success" && r.result === true && owners.get(id)?.toLowerCase() !== who.toLowerCase()) lent.push(id);
+    });
   }
-  const list = [...ids];
-  if (list.length === 0) return [];
-  const ok = await client.multicall({
-    contracts: list.map((id) => ({ address: chogstra(), abi: chogstraAbi, functionName: "canPerform", args: [who, BigInt(id)] }) as const),
-    allowFailure: true,
-  });
-  return list.filter((_, i) => ok[i].status === "success" && ok[i].result === true);
+  return lent;
 }
 
 export type Delegation = { to: Address; expiry: number; ownerAtGrant: Address };
@@ -100,22 +94,33 @@ export async function readDelegation(client: PublicClient, tokenId: number): Pro
   return { to, expiry: Number(expiry), ownerAtGrant };
 }
 
-/** Spotlight Chogs drawn for a movement (Spotlighted events). */
+const MAX_SPOTLIGHTS = 3;
+const MAX_DRAWS = 2048;
+
+/**
+ * Spotlight Chogs drawn for a movement, recomputed from onchain state with the exact
+ * algorithm in Chogstra.resolveSpotlight: draw i picks keccak256(abi.encode(seed, i)) % 1969 + 1
+ * and keeps the first 3 distinct Chogs with performedIn[movement][tokenId]. Only once resolved.
+ */
 export async function readSpotlightIds(client: PublicClient, movement: number): Promise<number[]> {
   if (movement < 0) return [];
-  const ids = new Set<number>();
-  for (const [fromBlock, toBlock] of await logRanges(client)) {
-    const logs = await client.getContractEvents({
-      address: chogstra(),
-      abi: chogstraAbi,
-      eventName: "Spotlighted",
-      args: { movement },
-      fromBlock,
-      toBlock,
+  const [, , resolved] = await client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "closings", args: [movement] });
+  if (!resolved) return [];
+  const seed = await client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "seeds", args: [movement] });
+  const performed = new Set<number>();
+  for (const ids of batches(ALL_IDS)) {
+    const res = await client.multicall({
+      contracts: ids.map((id) => ({ address: chogstra(), abi: chogstraAbi, functionName: "performedIn", args: [movement, BigInt(id)] }) as const),
+      allowFailure: false,
     });
-    for (const log of logs) if (log.args.tokenId !== undefined) ids.add(Number(log.args.tokenId));
+    ids.forEach((id, i) => res[i] && performed.add(id));
   }
-  return [...ids];
+  const winners: number[] = [];
+  for (let i = 0; i < MAX_DRAWS && winners.length < MAX_SPOTLIGHTS; i++) {
+    const tokenId = Number(BigInt(keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "uint256" }], [seed, BigInt(i)]))) % BigInt(CHOG_COUNT)) + 1;
+    if (performed.has(tokenId) && !winners.includes(tokenId)) winners.push(tokenId);
+  }
+  return winners;
 }
 
 export async function readParts(client: PublicClient, ids: number[]): Promise<Map<number, OnchainPart>> {
