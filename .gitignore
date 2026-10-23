@@ -22,3 +22,6 @@ next-env.d.ts
 
 # local dev chain (scripts/dev-chain.sh)
 .dev-chain/
+
+# project banner: kept locally, not in the repo
+assets/banner.svg
