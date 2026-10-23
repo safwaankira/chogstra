@@ -67,6 +67,16 @@ export async function readPerformerIds(client: PublicClient, movement: number): 
   return [...ids];
 }
 
+/** Every tokenId that has ever performed (Performed events across all movements). */
+export async function readAllPerformerIds(client: PublicClient): Promise<number[]> {
+  const ids = new Set<number>();
+  for (const [fromBlock, toBlock] of await logRanges(client)) {
+    const logs = await client.getContractEvents({ address: chogstra(), abi: chogstraAbi, eventName: "Performed", fromBlock, toBlock });
+    for (const log of logs) if (log.args.tokenId !== undefined) ids.add(Number(log.args.tokenId));
+  }
+  return [...ids];
+}
+
 /** Spotlight Chogs drawn for a movement (Spotlighted events). */
 export async function readSpotlightIds(client: PublicClient, movement: number): Promise<number[]> {
   if (movement < 0) return [];

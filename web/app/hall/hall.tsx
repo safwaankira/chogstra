@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { formatUnits } from "viem";
 import { useAccount } from "wagmi";
@@ -186,7 +187,17 @@ export function Hall({ guest = false }: { guest?: boolean }) {
           <span className="font-display text-xl font-black uppercase tracking-[0.22em] text-monad-hi">Chogstra</span>
           <span className="hidden text-xs text-ink-3 sm:inline">1,969 Chogs, one live song on {chain.name}</span>
         </p>
-        <WalletBar />
+        <div className="flex items-center gap-3">
+          <Link href="/leaderboard" className="text-xs font-medium text-ink-2 underline-offset-4 hover:text-ink hover:underline">
+            Leaderboard
+          </Link>
+          {!guest && (
+            <Link href="/guest" className="text-xs font-medium text-ink-2 underline-offset-4 hover:text-ink hover:underline">
+              Guest mode
+            </Link>
+          )}
+          <WalletBar />
+        </div>
       </nav>
 
       <header className="-mt-1 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
@@ -538,9 +549,9 @@ function Spectate({ reason }: { reason: string }) {
         Its traits set the sound. Its holder writes a 16-step loop onchain, and every loop plays together as one song on Monad.
       </p>
       <p className="text-sm text-ink-3">{reason}</p>
-      <a href="/guest" className="text-sm font-medium text-monad-hi underline-offset-4 hover:underline">
+      <Link href="/guest" className="text-sm font-medium text-monad-hi underline-offset-4 hover:underline">
         No Chog? Try it as a guest
-      </a>
+      </Link>
       <button disabled className="mt-auto w-full rounded-2xl bg-house-3 py-3 font-display text-xl font-extrabold uppercase tracking-[0.12em] text-ink-3">
         You need a Chog to play
       </button>
