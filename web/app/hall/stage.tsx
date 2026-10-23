@@ -285,6 +285,7 @@ function StageTile({
   const gel = meta.gel;
   const spotlight = seat.tags.includes("Spotlight");
   const mine = seat.tags.includes("Yours");
+  const guestSeat = seat.tags.includes("Guest");
   const preview = seat.tags.some((t) => t.startsWith("Preview"));
   const earlier = seat.tags.some((t) => t.startsWith("Part from"));
   const canAct = !!address && !isOwner && !!owner;
@@ -350,6 +351,11 @@ function StageTile({
             <path d="M6 1l1.4 3.1 3.4.3-2.6 2.2.8 3.3L6 8.2 3 9.9l.8-3.3L1.2 4.4l3.4-.3z" fill="currentColor" />
           </svg>
           <span className="sr-only @[120px]:not-sr-only">Spotlight</span>
+        </span>
+      )}
+      {guestSeat && (
+        <span className="absolute bottom-1.5 left-1.5 rounded-full bg-warn px-2 py-0.5 text-[11px] font-semibold text-house shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+          Guest
         </span>
       )}
       {mine && (

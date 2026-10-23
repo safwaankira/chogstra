@@ -16,12 +16,20 @@ import { WalletBar } from "./wallet";
 
 type Performed = { tokenId: number; movement: number; hash: string; by: string };
 
-export function Hall() {
+/** guest: the /guest door for judges and non-holders. A random real Chog's traits, browser-only, never onchain. */
+export function Hall({ guest = false }: { guest?: boolean }) {
   const [chogs, setChogs] = useState<Map<number, Chog> | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [guestId, setGuestId] = useState<number | null>(null);
   useEffect(() => {
-    loadChogs().then(setChogs, (e: unknown) => setLoadError(e instanceof Error ? e.message : String(e)));
-  }, []);
+    loadChogs().then(
+      (map) => {
+        setChogs(map);
+        if (guest) setGuestId(pickGuest(map));
+      },
+      (e: unknown) => setLoadError(e instanceof Error ? e.message : String(e)),
+    );
+  }, [guest]);
 
   const { address } = useAccount();
   const hall = useHall();
@@ -31,7 +39,8 @@ export function Hall() {
   // Both belong to the wallet that made them; switching wallets hides them.
   const [previewState, setPreviewState] = useState<(Draft & { by: string }) | null>(null);
   const [performedState, setPerformed] = useState<Performed | null>(null);
-  const preview = previewState && previewState.by === address ? previewState : null;
+  const previewer = guest ? "guest" : address;
+  const preview = previewState && previewState.by === previewer ? previewState : null;
   const performed = performedState && performedState.by === address ? performedState : null;
   const [rotation, setRotation] = useState(0);
   const [audio, setAudio] = useState<"off" | "starting" | "on">("off");
@@ -65,13 +74,14 @@ export function Hall() {
       const p = patterns.get(id)!;
       const tags = [
         spotlightIds.includes(id) ? "Spotlight" : null,
-        mine.has(id) ? "Yours" : null,
+        mine.has(id) && !guest ? "Yours" : null,
+        guest && id === guestId ? "Guest" : null,
         preview?.tokenId === id ? "Preview · not onchain" : null,
         !p.thisMovement && preview?.tokenId !== id ? `Part from an earlier movement` : null,
       ].filter(Boolean) as string[];
       return { chog, sound: chogSound(id, chog.traits), tags, partThisMovement: p.thisMovement, pattern: p.pattern };
     });
-  }, [chogs, movement, hall.partsQ.data, hall.spotlightQ.data, preview, performed, owned.data, rotation]);
+  }, [chogs, movement, hall.partsQ.data, hall.spotlightQ.data, preview, performed, owned.data, rotation, guest, guestId]);
 
   const details = useStageDetails(
     seats.map((s) => s.chog.tokenId),
@@ -131,7 +141,7 @@ export function Hall() {
     if (audio === "on") engineRef.current?.setTempo(tempo);
   }, [audio, tempo]);
 
-  const onPreview = useCallback((d: Draft | null) => setPreviewState(d && address ? { ...d, by: address } : null), [address]);
+  const onPreview = useCallback((d: Draft | null) => setPreviewState(d && previewer ? { ...d, by: previewer } : null), [previewer]);
   const onPerformed = useCallback(
     (tokenId: number, hash: string) => {
       setPreviewState(null);
@@ -274,7 +284,29 @@ export function Hall() {
             <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-monad shadow-[0_2px_8px_var(--monad)]" />
             Your console
           </h2>
-          {!address ? (
+          {guest ? (
+            guestId === null ? (
+              <p className="text-sm text-ink-2">Picking your Guest Chog…</p>
+            ) : (
+              <Composer
+                key={`guest-${guestId}`}
+                chogs={chogs}
+                ownedIds={[guestId]}
+                scale={scale}
+                movement={movement}
+                existingParts={new Map()}
+                previewing={preview !== null}
+                onPreview={onPreview}
+                onPerformed={onPerformed}
+                barClock={barClock}
+                guest
+                onAnotherGuest={() => {
+                  setPreviewState(null);
+                  setGuestId(pickGuest(chogs));
+                }}
+              />
+            )
+          ) : !address ? (
             <Spectate reason="Connect a wallet that holds a Chog to write its part." />
           ) : owned.isPending ? (
             <p className="text-sm text-ink-2">
@@ -429,6 +461,12 @@ function EmptyStage({ movement, connected, holdsChogs, quiet }: { movement: numb
   );
 }
 
+/** A random real Chog for a guest visit (not a live performer, so the preview never shadows a real part). */
+function pickGuest(chogs: Map<number, Chog>): number {
+  const ids = [...chogs.keys()];
+  return ids[Math.floor(Math.random() * ids.length)];
+}
+
 function Spectate({ reason }: { reason: string }) {
   return (
     <div className="flex flex-1 flex-col gap-4">
@@ -439,6 +477,9 @@ function Spectate({ reason }: { reason: string }) {
         Its traits set the sound. Its holder writes a 16-step loop onchain, and every loop plays together as one song on Monad.
       </p>
       <p className="text-sm text-ink-3">{reason}</p>
+      <a href="/guest" className="text-sm font-medium text-monad-hi underline-offset-4 hover:underline">
+        No Chog? Try it as a guest
+      </a>
       <button disabled className="mt-auto w-full rounded-2xl bg-house-3 py-3 font-display text-xl font-extrabold uppercase tracking-[0.12em] text-ink-3">
         You need a Chog to play
       </button>

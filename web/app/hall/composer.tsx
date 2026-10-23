@@ -28,6 +28,8 @@ export function Composer({
   onPreview,
   onPerformed,
   barClock,
+  guest = false,
+  onAnotherGuest,
 }: {
   chogs: Map<number, Chog>;
   ownedIds: number[];
@@ -38,6 +40,9 @@ export function Composer({
   onPreview: (draft: Draft | null) => void;
   onPerformed: (tokenId: number, hash: string) => void;
   barClock: RefObject<BarClock>;
+  /** Guest Chog: preview only; Perform stays disabled. */
+  guest?: boolean;
+  onAnotherGuest?: () => void;
 }) {
   const [selected, setSelected] = useState<number>(ownedIds[0]);
   const [steps, setSteps] = useState<Step[]>(() => initialSteps(existingParts.get(ownedIds[0])));
@@ -118,7 +123,19 @@ export function Composer({
         </div>
       )}
 
-      <InstrumentCard chog={chog} sound={sound} onchain={onchain} movement={movement} />
+      {guest && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-warn/10 px-3 py-2 text-xs text-warn">
+          <span>
+            <span className="font-semibold">Guest Chog.</span> Real traits, played only in your browser. Never onchain.
+          </span>
+          {onAnotherGuest && (
+            <button onClick={onAnotherGuest} className="h-8 rounded-full px-3 font-semibold ring-1 ring-inset ring-warn/40 hover:bg-warn/10">
+              Another Guest Chog
+            </button>
+          )}
+        </div>
+      )}
+      <InstrumentCard chog={chog} sound={sound} onchain={guest ? undefined : onchain} movement={movement} />
 
       <div>
         <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 border-t border-line pt-3">
@@ -160,7 +177,7 @@ export function Composer({
       </div>
 
       <div className="space-y-1.5 border-t border-line pt-3">
-        {noteCount > 0 && (
+        {noteCount > 0 && !guest && (
           <p className="text-xs text-ink-2">
             <span className="font-medium text-ink">{chog.name}</span> · {ROLE_META[sound.role].label.toLowerCase()} ·{" "}
             <span className="tabular">{noteCount}</span> {noteCount === 1 ? "note" : "notes"} → Movement <span className="tabular">{movement}</span>
@@ -169,12 +186,13 @@ export function Composer({
         )}
         <button
           onClick={perform}
-          disabled={tx.busy || noteCount === 0}
+          disabled={guest || tx.busy || noteCount === 0}
           className="w-full rounded-2xl bg-monad py-3 font-display text-xl font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_10px_30px_-10px_var(--monad)] transition hover:bg-monad-deep active:scale-[0.99] disabled:bg-house-3 disabled:text-ink-3 disabled:shadow-none"
         >
-          {tx.busy ? "Performing…" : "Perform onchain"}
+          {guest ? "You need a Chog to play" : tx.busy ? "Performing…" : "Perform onchain"}
         </button>
-        {noteCount === 0 && <p className="text-xs text-ink-3">Light up at least one step to perform. Performing writes this loop onchain for this Movement.</p>}
+        {guest && <p className="text-xs text-ink-3">Turn on Hear it in the song to play your loop with the live band. Holders perform onchain.</p>}
+        {noteCount === 0 && !guest && <p className="text-xs text-ink-3">Light up at least one step to perform. Performing writes this loop onchain for this Movement.</p>}
         <TxStatus state={tx.state} verb="your performance" />
       </div>
     </div>
