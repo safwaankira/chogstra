@@ -6,7 +6,8 @@
 
 import { useCallback, useState } from "react";
 import { BaseError, type Abi, type Address, type ContractFunctionArgs, type ContractFunctionName, type Hash } from "viem";
-import { useAccount, usePublicClient, useWalletClient } from "wagmi";
+import { useAccount, useConfig, usePublicClient } from "wagmi";
+import { getAccount, getWalletClient, switchChain } from "wagmi/actions";
 import { chain } from "./chain";
 
 export type TxState =
@@ -39,17 +40,25 @@ export function errorMessage(err: unknown): string {
 export function useTx() {
   const [state, setState] = useState<TxState>({ status: "idle" });
   const { address } = useAccount();
+  const config = useConfig();
   const publicClient = usePublicClient();
-  const { data: walletClient } = useWalletClient();
 
   const send = useCallback(
     async <abi extends Abi, fn extends ContractFunctionName<abi, "nonpayable" | "payable">>(req: WriteRequest<abi, fn>) => {
-      if (!address || !walletClient || !publicClient) {
+      if (!address || !publicClient) {
         setState({ status: "error", message: "Connect a wallet first." });
         return null;
       }
       let hash: Hash | undefined;
       try {
+        // Browser wallets can sit on another network; move them to ours before signing.
+        if (getAccount(config).chainId !== chain.id) {
+          setState({ status: "signing" });
+          await switchChain(config, { chainId: chain.id });
+        }
+        // Fetch the wallet client at send time: the hook's copy can still be loading
+        // right after a browser wallet connects.
+        const walletClient = await getWalletClient(config, { chainId: chain.id });
         setState({ status: "estimating" });
         // The generic request is passed through as-is; viem checks it at runtime.
         const call = { ...req, account: address } as never;
@@ -67,7 +76,7 @@ export function useTx() {
         return null;
       }
     },
-    [address, publicClient, walletClient],
+    [address, config, publicClient],
   );
 
   const reset = useCallback(() => setState({ status: "idle" }), []);

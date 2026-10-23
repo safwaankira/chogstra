@@ -84,18 +84,23 @@ export function DelegatePanel({ tokenId }: { tokenId: number }) {
                 aria-label="Friend's wallet address"
                 className="h-8 min-w-0 flex-1 rounded-full bg-house px-3 font-mono text-xs text-ink outline-none ring-1 ring-inset ring-line focus:ring-monad"
               />
-              <select
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                aria-label="Loan length"
-                className="h-8 rounded-full bg-house px-3 text-xs text-ink ring-1 ring-inset ring-line"
-              >
-                {DURATIONS.map((o) => (
-                  <option key={o.seconds} value={o.seconds}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+              <span className="relative">
+                <select
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  aria-label="Loan length"
+                  className="h-8 appearance-none rounded-full bg-house pl-3 pr-8 text-xs text-ink ring-1 ring-inset ring-line focus:outline-none focus:ring-monad"
+                >
+                  {DURATIONS.map((o) => (
+                    <option key={o.seconds} value={o.seconds}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-3">
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+                </svg>
+              </span>
               <button
                 onClick={lend}
                 disabled={!validTo || lendTx.busy}
