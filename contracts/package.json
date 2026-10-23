@@ -1,0 +1,8 @@
+{
+  "name": "chogstra-contracts",
+  "private": true,
+  "description": "Solidity dependencies installed from npm (Pyth's recommended way to get the Entropy SDK). Foundry reads them via the remapping in foundry.toml.",
+  "dependencies": {
+    "@pythnetwork/entropy-sdk-solidity": "^2.2.1"
+  }
+}
