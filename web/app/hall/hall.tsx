@@ -12,7 +12,7 @@ import { chogSound, type Role } from "@/lib/mapping";
 import { DEFAULT_SETTING, KEY_NAMES, MOODS, scaleFor } from "@/lib/music";
 import { Composer, type BarClock, type Draft } from "./composer";
 import { Silhouette, Stage, type StageSeat } from "./stage";
-import { useHall, useNextMovementIn, useOwnedChogs, useOwnedParts, useStageDetails } from "./useHall";
+import { useHall, useLentChogs, useNextMovementIn, useOwnedChogs, useOwnedParts, useStageDetails } from "./useHall";
 import { WalletBar } from "./wallet";
 
 type Performed = { tokenId: number; movement: number; hash: string; by: string };
@@ -35,7 +35,13 @@ export function Hall({ guest = false }: { guest?: boolean }) {
   const { address } = useAccount();
   const hall = useHall();
   const owned = useOwnedChogs(address);
-  const ownedParts = useOwnedParts(owned.data);
+  const lent = useLentChogs(address);
+  // The console plays your own Chogs plus any lent to you.
+  const consoleIds = useMemo(() => {
+    if (!owned.data) return undefined;
+    return [...owned.data, ...(lent.data ?? []).filter((id) => !owned.data.includes(id))];
+  }, [owned.data, lent.data]);
+  const ownedParts = useOwnedParts(consoleIds);
 
   // Both belong to the wallet that made them; switching wallets hides them.
   const [previewState, setPreviewState] = useState<(Draft & { by: string }) | null>(null);
@@ -332,7 +338,7 @@ export function Hall({ guest = false }: { guest?: boolean }) {
             </p>
           ) : owned.isError ? (
             <p className="text-sm text-bad">Couldn&apos;t check Chog ownership: {owned.error.message.split("\n")[0]}</p>
-          ) : owned.data.length === 0 ? (
+          ) : consoleIds!.length === 0 ? (
             <Spectate reason="This wallet holds no Chogs. You can still listen, applaud and tip." />
           ) : !ownedParts.data ? (
             <p className="text-sm text-ink-2">Reading your Chogs&apos; parts…</p>
@@ -340,7 +346,8 @@ export function Hall({ guest = false }: { guest?: boolean }) {
             <Composer
               key={address}
               chogs={chogs}
-              ownedIds={owned.data}
+              ownedIds={consoleIds!}
+              lentIds={(lent.data ?? []).filter((id) => !owned.data.includes(id))}
               scale={scale}
               movement={movement}
               existingParts={ownedParts.data}

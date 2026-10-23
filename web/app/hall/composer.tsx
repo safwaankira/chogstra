@@ -8,6 +8,7 @@ import { FAMILY_TONE, ROLE_OCTAVE, chogSound, type ChogSound } from "@/lib/mappi
 import { DRUM_PIECES, STEPS, decodePattern, degreeToMidi, encodePattern, noteName, type Scale, type Step } from "@/lib/music";
 import type { OnchainPart } from "@/lib/reads";
 import { useTx } from "@/lib/useTx";
+import { DelegatePanel } from "./delegate";
 import { ROLE_META } from "./stage";
 import { TxStatus } from "./tx-status";
 
@@ -28,6 +29,7 @@ export function Composer({
   onPreview,
   onPerformed,
   barClock,
+  lentIds = [],
   guest = false,
   onAnotherGuest,
 }: {
@@ -40,6 +42,8 @@ export function Composer({
   onPreview: (draft: Draft | null) => void;
   onPerformed: (tokenId: number, hash: string) => void;
   barClock: RefObject<BarClock>;
+  /** Chogs lent to this wallet (perform allowed, lending not). */
+  lentIds?: number[];
   /** Guest Chog: preview only; Perform stays disabled. */
   guest?: boolean;
   onAnotherGuest?: () => void;
@@ -135,6 +139,11 @@ export function Composer({
           )}
         </div>
       )}
+      {lentIds.includes(selected) && (
+        <p className="rounded-2xl bg-monad-deep/25 px-3 py-2 text-xs text-ink-2">
+          <span className="font-semibold text-ink">Lent to you.</span> Its owner gave this wallet play rights. Performing writes this Chog&apos;s part.
+        </p>
+      )}
       <InstrumentCard chog={chog} sound={sound} onchain={guest ? undefined : onchain} movement={movement} />
 
       <div>
@@ -195,6 +204,7 @@ export function Composer({
         {noteCount === 0 && !guest && <p className="text-xs text-ink-3">Light up at least one step to perform. Performing writes this loop onchain for this Movement.</p>}
         <TxStatus state={tx.state} verb="your performance" />
       </div>
+      {!guest && !lentIds.includes(selected) && <DelegatePanel key={selected} tokenId={selected} />}
     </div>
   );
 }

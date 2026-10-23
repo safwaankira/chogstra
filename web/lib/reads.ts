@@ -77,6 +77,29 @@ export async function readAllPerformerIds(client: PublicClient): Promise<number[
   return [...ids];
 }
 
+/** Chogs currently lent to `who`: Delegated events naming them, confirmed live with canPerform (expiry and owner checked onchain). */
+export async function readLentToMe(client: PublicClient, who: Address): Promise<number[]> {
+  const ids = new Set<number>();
+  for (const [fromBlock, toBlock] of await logRanges(client)) {
+    const logs = await client.getContractEvents({ address: chogstra(), abi: chogstraAbi, eventName: "Delegated", args: { to: who }, fromBlock, toBlock });
+    for (const log of logs) if (log.args.tokenId !== undefined) ids.add(Number(log.args.tokenId));
+  }
+  const list = [...ids];
+  if (list.length === 0) return [];
+  const ok = await client.multicall({
+    contracts: list.map((id) => ({ address: chogstra(), abi: chogstraAbi, functionName: "canPerform", args: [who, BigInt(id)] }) as const),
+    allowFailure: true,
+  });
+  return list.filter((_, i) => ok[i].status === "success" && ok[i].result === true);
+}
+
+export type Delegation = { to: Address; expiry: number; ownerAtGrant: Address };
+
+export async function readDelegation(client: PublicClient, tokenId: number): Promise<Delegation> {
+  const [to, expiry, ownerAtGrant] = await client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "delegations", args: [BigInt(tokenId)] });
+  return { to, expiry: Number(expiry), ownerAtGrant };
+}
+
 /** Spotlight Chogs drawn for a movement (Spotlighted events). */
 export async function readSpotlightIds(client: PublicClient, movement: number): Promise<number[]> {
   if (movement < 0) return [];

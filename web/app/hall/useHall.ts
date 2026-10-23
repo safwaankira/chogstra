@@ -12,6 +12,8 @@ import {
   readCareers,
   readChogAllowance,
   readChogBalance,
+  readDelegation,
+  readLentToMe,
   readClock,
   readEncorePot,
   readMovement,
@@ -124,6 +126,8 @@ export function useHall() {
             qc.invalidateQueries({ queryKey: ["spotlights"] });
             qc.invalidateQueries({ queryKey: ["pot"] });
             qc.invalidateQueries({ queryKey: ["careers"] });
+            qc.invalidateQueries({ queryKey: ["delegation"] });
+            qc.invalidateQueries({ queryKey: ["lent"] });
           }
         }
       },
@@ -188,6 +192,21 @@ export function useStageDetails(ids: number[], movement: number | undefined, fan
     enabled: ids.length > 0 && movement !== undefined && !!fan,
   });
   return { owners: owners.data, careers: careers.data, applauded: applauded.data };
+}
+
+/** Chogs other holders have lent to this wallet. */
+export function useLentChogs(address: Address | undefined) {
+  const client = usePublicClient() as PublicClient;
+  return useQuery({ queryKey: ["lent", address], queryFn: () => readLentToMe(client, address!), enabled: !!address && !!ADDRESSES.chogstra });
+}
+
+/** A Chog's current delegation plus the chain's clock, to tell whether it is still live. */
+export function useDelegation(tokenId: number) {
+  const client = usePublicClient() as PublicClient;
+  return useQuery({
+    queryKey: ["delegation", tokenId],
+    queryFn: async () => ({ delegation: await readDelegation(client, tokenId), clock: await readClock(client) }),
+  });
 }
 
 /** Latest onchain part (any movement) for each of the wallet's Chogs. */
