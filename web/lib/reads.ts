@@ -68,20 +68,18 @@ export async function readAllPerformerIds(client: PublicClient): Promise<number[
   return [...(await readAllParts(client)).keys()];
 }
 
-/** Chogs `who` may perform but doesn't own: canPerform for every Chog (live expiry and owner checks onchain). */
+/** Every Chog `who` may perform (owned or lent): canPerform for all 1,969, with live expiry and owner checks onchain. */
 export async function readLentToMe(client: PublicClient, who: Address): Promise<number[]> {
   const lent: number[] = [];
   for (const ids of batches(ALL_IDS)) {
-    const [can, owners] = await Promise.all([
-      client.multicall({
-        contracts: ids.map((id) => ({ address: chogstra(), abi: chogstraAbi, functionName: "canPerform", args: [who, BigInt(id)] }) as const),
-        allowFailure: true,
-      }),
-      readOwners(client, ids),
-    ]);
+    const can = await client.multicall({
+      contracts: ids.map((id) => ({ address: chogstra(), abi: chogstraAbi, functionName: "canPerform", args: [who, BigInt(id)] }) as const),
+      allowFailure: true,
+    });
+    // canPerform is also true for Chogs `who` owns; the hall removes those.
     ids.forEach((id, i) => {
       const r = can[i];
-      if (r.status === "success" && r.result === true && owners.get(id)?.toLowerCase() !== who.toLowerCase()) lent.push(id);
+      if (r.status === "success" && r.result === true) lent.push(id);
     });
   }
   return lent;

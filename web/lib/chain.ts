@@ -45,7 +45,7 @@ export const chain = IS_LOCAL
 export const RPC = RPC_URL;
 // Public Monad RPCs allow about 15 requests per second per visitor. Every RPC request
 // from this page goes through one queue capped below that; the local fork is unthrottled.
-const MAX_REQUESTS_PER_SECOND = IS_LOCAL ? Infinity : 10;
+const MAX_REQUESTS_PER_SECOND = IS_LOCAL ? Infinity : 13;
 let recent: number[] = [];
 async function throttledFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   for (;;) {

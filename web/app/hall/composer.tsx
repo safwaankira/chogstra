@@ -30,6 +30,8 @@ export function Composer({
   onPerformed,
   barClock,
   lentIds = [],
+  audioOn = true,
+  onNeedAudio,
   guest = false,
   onAnotherGuest,
 }: {
@@ -42,6 +44,9 @@ export function Composer({
   onPreview: (draft: Draft | null) => void;
   onPerformed: (tokenId: number, hash: string) => void;
   barClock: RefObject<BarClock>;
+  /** Whether the hall's sound is on; previewing turns it on if not. */
+  audioOn?: boolean;
+  onNeedAudio?: () => void;
   /** Chogs lent to this wallet (perform allowed, lending not). */
   lentIds?: number[];
   /** Guest Chog: preview only; Perform stays disabled. */
@@ -159,7 +164,10 @@ export function Composer({
             <input
               type="checkbox"
               checked={previewing}
-              onChange={(e) => onPreview(e.target.checked ? { tokenId: selected, pattern } : null)}
+              onChange={(e) => {
+                if (e.target.checked && !audioOn) onNeedAudio?.();
+                onPreview(e.target.checked ? { tokenId: selected, pattern } : null);
+              }}
               className="peer sr-only"
             />
             <span
@@ -182,7 +190,13 @@ export function Composer({
             </button>
           </div>
         </div>
-        {previewing && <p className="mt-1 text-[11px] text-ink-3">Only you hear the preview. Nothing is onchain until you perform.</p>}
+        {previewing && (
+          <p className="mt-1 text-[11px] text-ink-2">
+            {onchain && onchain.pattern === pattern
+              ? "This matches your onchain part, so the song sounds the same. Change a step to hear the difference."
+              : `${chog.name} is playing this draft on the Stage now (dashed outline). Only you hear it; nothing is onchain until you perform.`}
+          </p>
+        )}
       </div>
 
       <div className="space-y-1.5 border-t border-line pt-3">

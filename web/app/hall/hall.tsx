@@ -36,7 +36,8 @@ export function Hall({ guest = false }: { guest?: boolean }) {
   const { address } = useAccount();
   const hall = useHall();
   const owned = useOwnedChogs(address);
-  const lent = useLentChogs(address);
+  // Loans are checked after ownership, so the two sweeps don't compete for the RPC.
+  const lent = useLentChogs(owned.data ? address : undefined);
   // The console plays your own Chogs plus any lent to you.
   const consoleIds = useMemo(() => {
     if (!owned.data) return undefined;
@@ -188,11 +189,12 @@ export function Hall({ guest = false }: { guest?: boolean }) {
       </Notice>
     );
   }
-  if (!chogs || movement === undefined || !hall.settingQ.data || !hall.partsQ.data) {
+  if (!chogs || movement === undefined || !hall.settingQ.data) {
     return <Notice>Opening the hall…</Notice>;
   }
 
-  const performerCount = [...hall.partsQ.data.values()].filter((p) => p.movement === movement).length;
+  const partsLoading = !hall.partsQ.data;
+  const performerCount = [...(hall.partsQ.data?.values() ?? [])].filter((p) => p.movement === movement).length;
   const youAreIn = performed && performed.movement === movement;
   const mood = MOODS[setting.moodIndex];
   const holdsChogs = !!address && !!owned.data && owned.data.length > 0;
@@ -260,7 +262,7 @@ export function Hall({ guest = false }: { guest?: boolean }) {
             details={details}
             movement={movement}
             featured={youAreIn ? performed.tokenId : undefined}
-            empty={<EmptyStage movement={movement} connected={!!address} holdsChogs={holdsChogs} quiet={doors !== "gone"} />}
+            empty={<EmptyStage movement={movement} connected={!!address} holdsChogs={holdsChogs} quiet={doors !== "gone" || partsLoading} />}
             top={
               <div className="pointer-events-none flex flex-wrap items-start justify-between gap-2">
                   {youAreIn ? (
@@ -271,12 +273,14 @@ export function Hall({ guest = false }: { guest?: boolean }) {
                       </span>
                       <ShareCardButton
                         chog={chogs.get(performed.tokenId)}
-                        pattern={hall.partsQ.data.get(performed.tokenId)?.pattern}
+                        pattern={hall.partsQ.data?.get(performed.tokenId)?.pattern}
                         movement={movement}
                         settingText={`${KEY_NAMES[setting.keyIndex]} ${mood.scale} · ${setting.tempo} bpm · mood ${mood.name}`}
                         hash={performed.hash}
                       />
                     </p>
+                  ) : partsLoading ? (
+                    <p className="rounded-full bg-house/85 px-3 py-1 text-xs text-ink-2">Tuning up: reading every Chog&apos;s part from the chain…</p>
                   ) : address && seats.some((x) => !x.tags.includes("Yours")) && doors === "gone" ? (
                     <p className="rounded-full bg-house/85 px-3 py-1 text-xs text-ink-2">Tap a Chog to applaud or tip</p>
                   ) : (
@@ -333,6 +337,8 @@ export function Hall({ guest = false }: { guest?: boolean }) {
                 existingParts={new Map()}
                 previewing={preview !== null}
                 onPreview={onPreview}
+                audioOn={audio === "on"}
+                onNeedAudio={enterHall}
                 onPerformed={onPerformed}
                 barClock={barClock}
                 guest
@@ -365,6 +371,8 @@ export function Hall({ guest = false }: { guest?: boolean }) {
               existingParts={ownedParts.data}
               previewing={preview !== null}
               onPreview={onPreview}
+              audioOn={audio === "on"}
+              onNeedAudio={enterHall}
               onPerformed={onPerformed}
               barClock={barClock}
             />
