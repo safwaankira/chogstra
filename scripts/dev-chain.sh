@@ -99,8 +99,9 @@ say "Deploying Chogstra (startTime $START_TIME)"
 CHOG_NFT="$CHOG_NFT" CHOG_TOKEN="$CHOG_TOKEN" ENTROPY="$ENTROPY" START_TIME="$START_TIME" \
   forge script script/Deploy.s.sol:Deploy --rpc-url "$RPC" --broadcast --unlocked --sender "$ACCOUNT0" >"$STATE_DIR/deploy.log" 2>&1 ||
   { cat "$STATE_DIR/deploy.log"; die "deploy failed"; }
-CHOGSTRA=$(node -e 'const r=require(process.argv[1]);console.log(r.transactions.find(t=>t.contractName==="Chogstra").contractAddress)' \
-  "$ROOT/contracts/broadcast/Deploy.s.sol/$CHAIN_ID/run-latest.json")
+RUN_JSON="$ROOT/contracts/broadcast/Deploy.s.sol/$CHAIN_ID/run-latest.json"
+CHOGSTRA=$(node -e 'const r=require(process.argv[1]);console.log(r.transactions.find(t=>t.contractName==="Chogstra").contractAddress)' "$RUN_JSON")
+DEPLOY_BLOCK=$(node -e 'const r=require(process.argv[1]);console.log(Number(r.receipts[0].blockNumber))' "$RUN_JSON")
 cd "$ROOT"
 
 # --- 3. Real Chogs into the test accounts -------------------------------------
@@ -148,6 +149,10 @@ send --from "$CHOG_WHALE" "$CHOG_TOKEN" "transfer(address,uint256)" "$ACCOUNT0" 
 send --from "$CHOG_WHALE" "$CHOG_TOKEN" "transfer(address,uint256)" "$ACCOUNT1" "$CHOG_TO_ACCOUNT1_WEI"
 cast rpc anvil_stopImpersonatingAccount "$CHOG_WHALE" --rpc-url "$RPC" >/dev/null
 
+# --- 4b. Warm the fork's cache of Chog owners (makes the app's first ownership scan fast) ---
+say "Caching all 1,969 Chog owners in the fork (one-time, from Monad's RPC)"
+(cd "$ROOT/web" && node scripts/warm-fork.mjs "$RPC" "$CHOG_NFT")
+
 # --- 5. Check and write env files ----------------------------------------------
 lower() { echo "$1" | tr A-F a-f; }
 for id in "$HALO" "$SKULL" "$COMMON"; do
@@ -168,7 +173,9 @@ write_env_block() { # file, block
 
 write_env_block "$ROOT/web/.env.local" "NEXT_PUBLIC_CHAIN_ID=$CHAIN_ID
 NEXT_PUBLIC_RPC_URL=$RPC
+NEXT_PUBLIC_WS_URL=ws://127.0.0.1:$PORT
 NEXT_PUBLIC_CHOGSTRA_ADDRESS=$CHOGSTRA
+NEXT_PUBLIC_CHOGSTRA_DEPLOY_BLOCK=$DEPLOY_BLOCK
 NEXT_PUBLIC_ENTROPY_ADDRESS=$ENTROPY
 NEXT_PUBLIC_CHOG_NFT_ADDRESS=$CHOG_NFT
 NEXT_PUBLIC_CHOG_TOKEN_ADDRESS=$CHOG_TOKEN
@@ -182,6 +189,7 @@ CHAIN_ID=$CHAIN_ID
 FORK_BLOCK=$FORK_BLOCK
 START_TIME=$START_TIME
 CHOGSTRA=$CHOGSTRA
+CHOGSTRA_DEPLOY_BLOCK=$DEPLOY_BLOCK
 ENTROPY=$ENTROPY
 CHOG_NFT=$CHOG_NFT
 CHOG_TOKEN=$CHOG_TOKEN
@@ -200,7 +208,7 @@ cat <<EOF
 ────────────────────────────────────────────────────────────────
  RPC            $RPC   (chain id $CHAIN_ID)
  Forked from    Monad mainnet block $FORK_BLOCK
- Chogstra       $CHOGSTRA
+ Chogstra       $CHOGSTRA   (deployed in block $DEPLOY_BLOCK)
  MockEntropyV2  $ENTROPY   (fee $(cast from-wei "$ENTROPY_FEE_WEI") MON)
  Chog Genesis   $CHOG_NFT   (real, forked)
  \$CHOG          $CHOG_TOKEN   (real, forked)

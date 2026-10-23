@@ -83,6 +83,8 @@ Everything runs on this Mac. Nothing is sent to Monad.
 - `scripts/dev-chain.sh stop`: stops anvil. Its state and log are in `.dev-chain/` (gitignored).
 - `scripts/dev-next-day.sh`: +24h. `--close` also closes the movement that just ended and delivers a random mock Entropy seed. `--spotlight` also resolves its Spotlight.
 - `contracts/script/Deploy.s.sol` reads `CHOG_NFT`, `CHOG_TOKEN`, `ENTROPY` and `START_TIME` from the environment. On the fork, send transactions with `cast send --unlocked --from <anvil account>`. Anvil prints its public test keys when it starts.
+- Web app: `npm --prefix web run dev`, then open http://localhost:3000. `NEXT_PUBLIC_CHAIN_ID` (31337 local fork, 143 Monad mainnet) picks the chain at build time. The "Dev: Account #0/#1" mock wallets exist only when it is 31337.
+- After contract changes, regenerate the web ABI: `(cd contracts && forge build) && node web/scripts/gen-abi.mjs`.
 - Anvil runs Ethereum gas rules. Monad charges more for cold storage and account access (see the gas skill), so treat local gas numbers as a lower bound.
 
 ## Build order

@@ -27,8 +27,30 @@ export function decodePattern(pattern: bigint): Step[] {
 
 export type Scale = { name: string; rootMidi: number; intervals: number[] };
 
-// The /lab plays everything in C minor pentatonic. Movements will pick their own.
+// The /lab plays everything in C minor pentatonic.
 export const C_MINOR_PENTATONIC: Scale = { name: "C minor pentatonic", rootMidi: 0, intervals: [0, 3, 5, 7, 10] };
+
+// A Movement's setting (Chogstra.settingFor): keyIndex 0-11, tempo 80-110, moodIndex 0-3.
+// The mood picks the scale every part is locked to, so anything anyone writes fits.
+export const KEY_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+export const MOODS = [
+  { name: "Night", scale: "minor pentatonic", intervals: [0, 3, 5, 7, 10] },
+  { name: "Daylight", scale: "major pentatonic", intervals: [0, 2, 4, 7, 9] },
+  { name: "Blue", scale: "blues", intervals: [0, 3, 5, 6, 7, 10] },
+  { name: "Dream", scale: "dorian", intervals: [0, 2, 3, 5, 7, 9, 10] },
+] as const;
+
+export type Setting = { keyIndex: number; tempo: number; moodIndex: number };
+export const DEFAULT_SETTING: Setting = { keyIndex: 0, tempo: 90, moodIndex: 0 }; // matches Chogstra's DEFAULT_*
+
+export function scaleFor(setting: Setting): Scale {
+  const mood = MOODS[setting.moodIndex] ?? MOODS[0];
+  return { name: `${KEY_NAMES[setting.keyIndex]} ${mood.scale}`, rootMidi: setting.keyIndex, intervals: [...mood.intervals] };
+}
+
+export function noteName(midi: number): string {
+  return `${KEY_NAMES[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+}
 
 /** MIDI note for a scale degree. Degrees past the scale length climb into the next octave. */
 export function degreeToMidi(scale: Scale, degree: number, octave: number): number {

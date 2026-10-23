@@ -13,12 +13,15 @@ import {
   type ChogSound,
   type Room,
 } from "./mapping";
-import { C_MINOR_PENTATONIC, DRUM_PIECES, STEPS, decodePattern, degreeToMidi, type Scale } from "./music";
+import { C_MINOR_PENTATONIC, DRUM_PIECES, STEPS, decodePattern, degreeToMidi, type Scale, type Step } from "./music";
 
 export const BPM = 90;
 
 export type Part = { sound: ChogSound; pattern: bigint };
 export type NoteListener = (tokenId: number, step: number) => void;
+export type BarListener = (bar: number) => void;
+
+type LiveEntry = { key: string; voice: Voice; steps: Step[]; tokenId: number };
 
 type Voice = { trigger: (time: number, degree: number) => void; dispose: () => void };
 
@@ -195,10 +198,16 @@ export class BandEngine {
   private mixer: Mixer | null = null;
   private voices: Voice[] = [];
   private sequence: Tone.Sequence<number> | null = null;
+  // Live mode (the Stage): the band can change while it plays, swapping at bar lines.
+  private live: LiveEntry[] = [];
+  private pending: LiveEntry[] | null = null;
 
   /** Must be called from a user gesture (click/tap). */
   async start() {
     await Tone.start();
+    // Draw callbacks (portrait pulses) normally expire after 0.25s. Slow or
+    // throttled frames would drop most of them, so keep them alive a little longer.
+    Tone.getDraw().expiration = 1;
     if (!this.mixer) this.mixer = new Mixer();
     Tone.getTransport().bpm.value = BPM;
   }
@@ -230,7 +239,76 @@ export class BandEngine {
     transport.start("+0.1");
   }
 
+  /**
+   * Start an endless loop whose band can be changed with setBand(). onBar fires
+   * at the start of every bar (16 steps), counting from 1.
+   */
+  startLive(onNote: NoteListener, onBar: BarListener, bpm: number) {
+    if (!this.mixer) throw new Error("BandEngine.start() must be called first");
+    this.stop();
+    let bar = 0;
+    const steps = Array.from({ length: STEPS }, (_, i) => i);
+    this.sequence = new Tone.Sequence<number>(
+      (time, step) => {
+        if (step === 0) {
+          if (this.pending) this.swapBand(this.pending);
+          bar++;
+          const b = bar;
+          Tone.getDraw().schedule(() => onBar(b), time);
+        }
+        for (const e of this.live) {
+          const s = e.steps[step];
+          if (!s.on) continue;
+          e.voice.trigger(time, s.degree);
+          Tone.getDraw().schedule(() => onNote(e.tokenId, step), time);
+        }
+      },
+      steps,
+      "16n",
+    ).start(0);
+    const transport = Tone.getTransport();
+    transport.bpm.value = bpm;
+    transport.position = 0;
+    transport.start("+0.1");
+  }
+
+  /** Queue a new band; it takes over at the next bar line. Unchanged parts keep their voices. */
+  setBand(parts: Part[], scale: Scale) {
+    if (!this.mixer) return;
+    const mixer = this.mixer;
+    const reusable = new Map([...this.live, ...(this.pending ?? [])].map((e) => [e.key, e]));
+    const next = parts.map((p) => {
+      const key = `${p.sound.tokenId}:${p.pattern}:${scale.name}`;
+      return reusable.get(key) ?? { key, voice: buildVoice(p.sound, mixer, scale), steps: decodePattern(p.pattern), tokenId: p.sound.tokenId };
+    });
+    // A previous pending band that never played: drop the voices nobody kept.
+    if (this.pending) {
+      const keep = new Set([...next, ...this.live].map((e) => e.key));
+      this.disposeLater(this.pending.filter((e) => !keep.has(e.key)));
+    }
+    this.pending = next;
+    if (!this.sequence) this.swapBand(next);
+  }
+
+  setTempo(bpm: number) {
+    Tone.getTransport().bpm.rampTo(bpm, 2);
+  }
+
+  private swapBand(next: LiveEntry[]) {
+    const keep = new Set(next.map((e) => e.key));
+    this.disposeLater(this.live.filter((e) => !keep.has(e.key)));
+    this.live = next;
+    this.pending = null;
+  }
+
+  private disposeLater(entries: LiveEntry[]) {
+    if (entries.length) setTimeout(() => entries.forEach((e) => e.voice.dispose()), 2000);
+  }
+
   stop() {
+    this.disposeLater([...this.live, ...(this.pending ?? [])]);
+    this.live = [];
+    this.pending = null;
     const transport = Tone.getTransport();
     transport.stop();
     transport.cancel();
