@@ -89,7 +89,8 @@ export function Hall() {
       );
     }
     document.querySelectorAll(`[data-glow="${tokenId}"]`).forEach((el) => el.animate([{ opacity: 1 }, { opacity: 0 }], opts));
-    document.querySelectorAll(`[data-pool="${tokenId}"]`).forEach((el) => el.animate([{ opacity: 1 }, { opacity: 0.3 }], opts));
+    document.querySelectorAll(`[data-pool="${tokenId}"]`).forEach((el) => el.animate([{ opacity: 1 }, { opacity: 0.6 }], opts));
+    document.querySelectorAll(`[data-meter="${tokenId}"]`).forEach((el) => el.animate([{ transform: "scaleY(1)" }, { transform: "scaleY(0.18)" }], opts));
   }, []);
   const barClock = useRef<BarClock>(null);
   const tempoRef = useRef(tempo);
@@ -170,41 +171,40 @@ export function Hall() {
 
   return (
     <main className="flex min-h-dvh flex-col gap-4 px-4 pb-4 pt-3 lg:h-dvh lg:overflow-hidden sm:px-6">
-      <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <p className="font-display text-lg font-black uppercase tracking-[0.28em] text-monad-hi">Chogstra</p>
-            <p className="hidden text-xs text-ink-3 sm:block">1,969 Chogs, one live song on {chain.name}</p>
-          </div>
-          <div className="mt-1 flex flex-wrap items-end gap-x-5 gap-y-2">
-            <h1 className="font-display text-[clamp(2.75rem,6.2vw,5.5rem)] font-black uppercase leading-[0.82] tracking-[-0.01em] text-ink">
-              Movement <span className="tabular text-monad-hi">{movement}</span>
-            </h1>
-            <ul className="mb-1 flex flex-wrap gap-1.5" aria-label="This movement's setting">
-              <Chip label="Key" value={KEY_NAMES[setting.keyIndex]} />
-              <Chip label="Mood" value={`${mood.name}, ${mood.scale}`} />
-              <Chip label="Tempo" value={`${setting.tempo} bpm`} />
-              {waiting && (
-                <li className="flex items-center gap-1.5 rounded-full bg-warn/15 px-3 py-1 text-xs text-warn">
-                  <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-warn" />
-                  Waiting for today&apos;s draw
-                </li>
-              )}
-            </ul>
-          </div>
+      <nav aria-label="Chogstra" className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <p className="flex items-baseline gap-3">
+          <span className="font-display text-xl font-black uppercase tracking-[0.22em] text-monad-hi">Chogstra</span>
+          <span className="hidden text-xs text-ink-3 sm:inline">1,969 Chogs, one live song on {chain.name}</span>
+        </p>
+        <WalletBar />
+      </nav>
+
+      <header className="-mt-1 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+        <div className="flex min-w-0 flex-wrap items-end gap-x-5 gap-y-2">
+          <h1 className="font-display text-[clamp(2.75rem,6.2vw,5.5rem)] font-black uppercase leading-[0.82] tracking-[-0.01em] text-ink">
+            Movement <span className="tabular text-monad-hi">{movement}</span>
+          </h1>
+          <ul className="mb-1 flex flex-wrap gap-1.5" aria-label="This movement's setting">
+            <Chip label="Key" value={KEY_NAMES[setting.keyIndex]} />
+            <Chip label="Mood" value={`${mood.name}, ${mood.scale}`} />
+            <Chip label="Tempo" value={`${setting.tempo} bpm`} />
+            {waiting && (
+              <li className="flex items-center gap-1.5 rounded-full bg-warn/15 px-3 py-1 text-xs text-warn">
+                <span aria-hidden className="h-1.5 w-1.5 animate-pulse motion-reduce:animate-none rounded-full bg-warn" />
+                Waiting for today&apos;s draw
+              </li>
+            )}
+          </ul>
         </div>
 
-        <div className="grid w-full grid-cols-3 items-end gap-x-4 gap-y-3 sm:flex sm:w-auto sm:flex-wrap sm:gap-x-7">
+        <div className="grid w-full grid-cols-3 items-end gap-x-4 gap-y-3 sm:flex sm:w-auto sm:gap-x-8">
           <Stat label="Encore Pot" unit="$CHOG">
             {hall.potQ.data !== undefined ? <CountUp value={Number(formatUnits(hall.potQ.data, 18))} /> : "…"}
           </Stat>
           <Stat label="Next movement">{nextIn === null ? "…" : formatCountdown(nextIn)}</Stat>
-          <Stat label="On stage" unit={`/${STAGE_SIZE}`}>
+          <Stat label="On stage" unit={`of ${STAGE_SIZE} seats`}>
             {seats.length}
           </Stat>
-          <div className="col-span-3 sm:col-span-1">
-            <WalletBar />
-          </div>
         </div>
       </header>
 
@@ -221,10 +221,9 @@ export function Hall() {
             details={details}
             movement={movement}
             featured={youAreIn ? performed.tokenId : undefined}
-            empty={<EmptyStage movement={movement} connected={!!address} holdsChogs={holdsChogs} />}
-            overlay={
-              <>
-                <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex flex-wrap items-start justify-between gap-2">
+            empty={<EmptyStage movement={movement} connected={!!address} holdsChogs={holdsChogs} quiet={doors !== "gone"} />}
+            top={
+              <div className="pointer-events-none flex flex-wrap items-start justify-between gap-2">
                   {youAreIn ? (
                     <p className="feed-in pointer-events-auto rounded-full bg-monad-deep px-4 py-1.5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_var(--monad)]">
                       You&apos;re in Movement {movement}. {chogs.get(performed.tokenId)?.name ?? `#${performed.tokenId}`} is playing your part.
@@ -232,6 +231,8 @@ export function Hall() {
                         tx {performed.hash.slice(0, 8)}…{performed.hash.slice(-4)}
                       </span>
                     </p>
+                  ) : address && seats.some((x) => !x.tags.includes("Yours")) && doors === "gone" ? (
+                    <p className="rounded-full bg-house/85 px-3 py-1 text-xs text-ink-2">Tap a Chog to applaud or tip</p>
                   ) : (
                     <span />
                   )}
@@ -246,6 +247,9 @@ export function Hall() {
                     </ul>
                   )}
                 </div>
+            }
+            overlay={
+              <>
                 {doors !== "gone" && (
                   <HallDoors
                     state={doors}
@@ -377,18 +381,18 @@ function HallDoors({
       : playedThisMovement === 0
         ? `${held} Spotlight ${held === 1 ? "Chog is" : "Chogs are"} holding the stage with earlier parts. Nobody has played Movement ${movement} yet.`
         : `${playing} ${playing === 1 ? "Chog is" : "Chogs are"} on stage, each playing a loop its holder wrote onchain.`;
-  const panel = "absolute inset-y-0 w-1/2 bg-[color-mix(in_oklab,#120b22_74%,transparent)] backdrop-blur-[3px]";
+  const panel = "absolute inset-y-0 w-1/2 bg-[color-mix(in_oklab,#120b22_58%,transparent)] backdrop-blur-[1.5px] backdrop-saturate-50";
   return (
     <div className={`absolute inset-0 z-30 overflow-hidden rounded-[28px] ${state === "opening" ? "doors-open" : ""}`}>
-      <div aria-hidden className={`door-left left-0 ${panel}`} onAnimationEnd={onOpened} />
-      <div aria-hidden className={`door-right right-0 ${panel}`} />
+      <div aria-hidden className={`door-left left-0 ${panel} shadow-[inset_-10px_0_18px_-12px_rgba(0,0,0,0.9)]`} onAnimationEnd={onOpened} />
+      <div aria-hidden className={`door-right right-0 ${panel} shadow-[inset_10px_0_18px_-12px_rgba(0,0,0,0.9)]`} />
       {state === "closed" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 p-6 text-center">
           <p className="max-w-md text-sm text-ink-2">{copy}</p>
           <button
             onClick={onEnter}
             disabled={starting}
-            className="whitespace-nowrap rounded-full bg-monad px-8 py-4 font-display text-2xl font-black uppercase tracking-[0.1em] text-white shadow-[0_18px_44px_-14px_var(--monad),0_4px_12px_rgba(0,0,0,0.5)] transition hover:bg-monad-hi active:scale-[0.98] sm:px-10 sm:py-5 sm:text-4xl sm:tracking-[0.14em]"
+            className="whitespace-nowrap rounded-full bg-monad px-8 py-4 font-display text-2xl font-black uppercase tracking-[0.1em] text-white shadow-[0_18px_44px_-14px_var(--monad),0_4px_12px_rgba(0,0,0,0.5)] transition hover:bg-monad-deep active:scale-[0.98] sm:px-10 sm:py-5 sm:text-4xl sm:tracking-[0.14em]"
           >
             Enter the hall
           </button>
@@ -401,7 +405,7 @@ function HallDoors({
 
 const ROLES_IN_ORDER: Role[] = ["drums", "bass", "chords", "melody"];
 
-function EmptyStage({ movement, connected, holdsChogs }: { movement: number; connected: boolean; holdsChogs: boolean }) {
+function EmptyStage({ movement, connected, holdsChogs, quiet }: { movement: number; connected: boolean; holdsChogs: boolean; quiet: boolean }) {
   return (
     <div className="flex w-full max-w-2xl flex-col items-center text-center">
       <ul className="mb-8 flex w-full items-end justify-around" aria-hidden>
@@ -413,8 +417,8 @@ function EmptyStage({ movement, connected, holdsChogs }: { movement: number; con
           </li>
         ))}
       </ul>
-      <p className="font-display text-4xl font-black uppercase leading-none text-ink sm:text-5xl">Be the first to play</p>
-      <p className="mt-3 max-w-md text-sm text-ink-2">
+      {quiet ? null : <p className="font-display text-4xl font-black uppercase leading-none text-ink sm:text-5xl">Be the first to play</p>}
+      <p className={`mt-3 max-w-md text-sm text-ink-2 ${quiet ? "hidden" : ""}`}>
         {holdsChogs
           ? `Movement ${movement} has no band yet. Write a loop in the console and perform it, and it starts with you.`
           : connected
@@ -446,7 +450,7 @@ function Notice({ children, tone }: { children: ReactNode; tone?: "bad" }) {
   return (
     <main className="flex min-h-dvh flex-col px-4 py-4 sm:px-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <p className="font-display text-lg font-black uppercase tracking-[0.28em] text-monad-hi">Chogstra</p>
+        <p className="font-display text-xl font-black uppercase tracking-[0.22em] text-monad-hi">Chogstra</p>
         <WalletBar />
       </header>
       <div className="flex flex-1 items-center justify-center">

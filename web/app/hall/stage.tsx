@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { formatUnits, parseUnits, type Address } from "viem";
 import { useAccount } from "wagmi";
 import { chogstraAbi } from "@/lib/abi/chogstra";
@@ -101,6 +101,7 @@ export function Stage({
   movement,
   featured,
   empty,
+  top,
   overlay,
 }: {
   seats: StageSeat[];
@@ -109,60 +110,85 @@ export function Stage({
   /** The connected holder's just-performed Chog (Result state). */
   featured?: number;
   empty: ReactNode;
+  /** Banner and live feed: in flow on phones, floating over the stage's top edge on wider screens. */
+  top?: ReactNode;
   overlay?: ReactNode;
 }) {
   return (
-    <div className="relative flex h-full min-h-[30rem] flex-col overflow-hidden rounded-[28px] bg-[#0d0919]">
-      {/* Rig lights from above. */}
+    <div data-stage className="relative flex h-full min-h-[30rem] flex-col overflow-hidden rounded-[28px] bg-[#0d0919]">
+      {/* Rig lights from above: Monad purple wash with two warm spots. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
             "radial-gradient(60% 45% at 50% -8%, color-mix(in oklab, var(--monad) 34%, transparent), transparent 70%)," +
-            "radial-gradient(30% 35% at 18% -5%, color-mix(in oklab, var(--spill) 9%, transparent), transparent 70%)," +
-            "radial-gradient(30% 35% at 82% -5%, color-mix(in oklab, var(--spill) 9%, transparent), transparent 70%)",
+            "radial-gradient(26% 40% at 22% -6%, color-mix(in oklab, var(--spill) 16%, transparent), transparent 70%)," +
+            "radial-gradient(26% 40% at 78% -6%, color-mix(in oklab, var(--spill) 16%, transparent), transparent 70%)",
         }}
       />
-      {/* The stage floor: lacquered black boards catching the rig light, with a front lip. */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[34%]">
+      {/* The stage floor: black lacquer with one long sheen where the rig light lands, and a front lip. */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[36%]">
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(70% 60% at 50% 0%, color-mix(in oklab, var(--monad) 16%, transparent), transparent 75%)," +
-              "repeating-linear-gradient(90deg, transparent 0 63px, rgba(255,255,255,0.035) 63px 64px)," +
-              "linear-gradient(to bottom, #171028, #0a0712)",
-            maskImage: "linear-gradient(to bottom, transparent, black 22%)",
+              "radial-gradient(55% 28% at 50% 18%, color-mix(in oklab, var(--spill) 7%, transparent), transparent 80%)," +
+              "radial-gradient(80% 70% at 50% 0%, color-mix(in oklab, var(--monad) 18%, transparent), transparent 75%)," +
+              "linear-gradient(to bottom, #181029, #0d0819 60%, #08060f)",
+            maskImage: "linear-gradient(to bottom, transparent, black 18%)",
           }}
         />
-        <div className="absolute inset-x-0 bottom-0 h-1.5 bg-[linear-gradient(to_bottom,#2a2045,#0b0814)]" />
+        <div className="absolute inset-x-0 bottom-0 h-2 bg-[linear-gradient(to_bottom,#2c2148,#0b0814)] shadow-[0_-1px_0_rgba(255,255,255,0.05)]" />
       </div>
 
+      {top && <div className="relative z-20 px-3 pt-3 sm:absolute sm:inset-x-3 sm:top-3 sm:p-0">{top}</div>}
       {seats.length === 0 ? (
         <div className="relative flex flex-1 items-center justify-center p-6">{empty}</div>
       ) : (
-        <div className="relative flex flex-1 flex-col justify-evenly gap-6 px-3 pb-6 pt-14 sm:px-6">
-          {RISERS.map((roles, r) => (
-            <div key={r} className={`grid gap-x-6 gap-y-5 sm:grid-cols-2 ${r === 0 ? "sm:px-[5%]" : ""}`}>
-              {roles.map((role) => (
-                <RoleZone
-                  key={role}
-                  role={role}
-                  seats={seats.filter((s) => s.sound.role === role)}
-                  maxTile={tileMax(seats.length, r === 1)}
-                  featured={featured}
-                  details={details}
-                  movement={movement}
-                />
-              ))}
-            </div>
-          ))}
+        <div className="relative flex flex-1 flex-col justify-evenly gap-6 px-3 pb-6 pt-6 sm:px-6 sm:pt-14">
+          {RISERS.map((roles, r) => {
+            return (
+              <div key={r} className={`relative grid gap-x-6 gap-y-5 sm:grid-cols-2 ${r === 0 ? "sm:px-[5%]" : ""}`}>
+                {/* Riser plinth: the back row stands on a raised step. */}
+                {r === 0 && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-[2%] -bottom-3 hidden h-[42%] rounded-t-[14px] sm:block"
+                    style={{
+                      background: "linear-gradient(to bottom, color-mix(in oklab, var(--house-3) 70%, transparent), transparent)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+                    }}
+                  />
+                )}
+                {roles.map((role) => (
+                  <RoleZone
+                    key={role}
+                    role={role}
+                    seats={byRole(seats, role)}
+                    maxTile={tileMax(seats.length, r === 1)}
+                    featured={featured}
+                    details={details}
+                    movement={movement}
+                  />
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
       {overlay}
     </div>
   );
+}
+
+const TILE_GAP = 12;
+const MIN_SLOTS = 3;
+
+/** A role's seats in a stable order (Spotlight first, then tokenId), so rotation never reshuffles tiles under the cursor. */
+function byRole(seats: StageSeat[], role: Role) {
+  const spot = (s: StageSeat) => (s.tags.includes("Spotlight") ? 0 : 1);
+  return seats.filter((s) => s.sound.role === role).sort((a, b) => spot(a) - spot(b) || a.chog.tokenId - b.chog.tokenId);
 }
 
 function RoleZone({
@@ -181,6 +207,10 @@ function RoleZone({
   movement: number;
 }) {
   const meta = ROLE_META[role];
+  // Every zone sizes tiles as if it held at least MIN_SLOTS players, so zones of 1-3 all match
+  // (and match across the riser); only a busier zone shrinks its own tiles.
+  const slots = Math.max(MIN_SLOTS, seats.length);
+  const width = `calc((100% - ${(slots - 1) * TILE_GAP}px) / ${slots})`;
   return (
     <section aria-label={meta.label} className="relative z-10 min-w-0 has-[[aria-expanded=true]]:z-40">
       <h3 className="mb-3 flex items-center justify-center gap-2 font-display text-sm font-extrabold uppercase tracking-[0.18em] text-ink-2">
@@ -194,11 +224,12 @@ function RoleZone({
           <p className="text-xs text-ink-3">Open seat</p>
         </div>
       ) : (
-        <ul className="flex items-start justify-center gap-2.5 sm:gap-4">
+        <ul className="flex items-start justify-center" style={{ gap: TILE_GAP }}>
           {seats.map((seat) => (
             <StageTile
               key={seat.chog.tokenId}
               seat={seat}
+              width={width}
               maxTile={maxTile}
               featured={featured === seat.chog.tokenId}
               owner={details.owners?.get(seat.chog.tokenId)}
@@ -215,6 +246,7 @@ function RoleZone({
 
 function StageTile({
   seat,
+  width,
   maxTile,
   featured,
   owner,
@@ -223,6 +255,7 @@ function StageTile({
   movement,
 }: {
   seat: StageSeat;
+  width: string;
   maxTile: string;
   featured: boolean;
   owner: Address | undefined;
@@ -231,7 +264,21 @@ function StageTile({
   movement: number;
 }) {
   const { address } = useAccount();
-  const [tipOpen, setTipOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [align, setAlign] = useState<"center" | "left" | "right">("center");
+  const tileRef = useRef<HTMLLIElement>(null);
+
+  function toggle() {
+    // Keep the 16rem panel inside the stage: align it to whichever side has room.
+    const tile = tileRef.current?.getBoundingClientRect();
+    const stage = tileRef.current?.closest("[data-stage]")?.getBoundingClientRect();
+    if (tile && stage) {
+      const half = 128 + 8;
+      const mid = tile.left + tile.width / 2;
+      setAlign(mid - half < stage.left ? "left" : mid + half > stage.right ? "right" : "center");
+    }
+    setOpen((o) => !o);
+  }
   const isOwner = !!address && !!owner && owner.toLowerCase() === address.toLowerCase();
   const id = seat.chog.tokenId;
   const meta = ROLE_META[seat.sound.role];
@@ -242,9 +289,79 @@ function StageTile({
   const earlier = seat.tags.some((t) => t.startsWith("Part from"));
   const canAct = !!address && !isOwner && !!owner;
   const beam = spotlight || featured;
+  // "CHOG #1464" -> "#1464"; a 1:1 like "CHOG #1159 — Halo" -> "Halo".
+  const shortName = seat.chog.name.replace(/^CHOG #(\d+)(?: — (.+))?$/, (_m, n: string, title?: string) => title ?? `#${n}`);
+  const alt = `${seat.chog.name}, ${meta.label.toLowerCase()}${spotlight ? ", Spotlight" : ""}${mine ? ", yours" : ""}`;
+
+  // Close the actions panel on Escape or a click elsewhere.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onDown = (e: PointerEvent) => tileRef.current && !tileRef.current.contains(e.target as Node) && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onDown);
+    };
+  }, [open]);
+
+  const portrait = (
+    <>
+      {/* Floor pool: the light the Chog throws on the stage; brightens on every note. */}
+      <span
+        aria-hidden
+        data-pool={id}
+        className="pointer-events-none absolute -bottom-5 left-1/2 block h-9 w-[135%] -translate-x-1/2 rounded-[50%] opacity-60"
+        style={{ background: `radial-gradient(closest-side, ${gel}, transparent)` }}
+      />
+      <span
+        aria-hidden
+        data-glow={id}
+        className="pointer-events-none absolute -inset-1 block rounded-[20px] opacity-0"
+        style={{ boxShadow: `0 0 0 2px ${gel}, 0 10px 30px 2px color-mix(in oklab, ${gel} 65%, transparent)` }}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- IPFS portraits, no Next image config yet */}
+      <img
+        data-portrait={id}
+        src={chogImageUrl(seat.chog)}
+        alt={alt}
+        width={240}
+        height={240}
+        loading="lazy"
+        className={`relative block aspect-square w-full rounded-[18px] bg-house-3 object-cover shadow-[0_14px_28px_-12px_rgba(0,0,0,0.9)] ${featured ? "ring-2 ring-monad-hi ring-offset-2 ring-offset-[#0d0919]" : ""} ${preview ? "outline-2 outline-dashed outline-offset-2 outline-ink-3" : ""} ${earlier && !preview ? "saturate-[0.7]" : ""}`}
+      />
+      {/* Reflection in the lacquered floor. */}
+      <span aria-hidden className="pointer-events-none absolute left-0 top-full mt-1 block aspect-[2/1] w-full overflow-hidden rounded-[18px]">
+        {/* eslint-disable-next-line @next/next/no-img-element -- reflection of the same portrait */}
+        <img
+          src={chogImageUrl(seat.chog)}
+          alt=""
+          className="block aspect-square w-full -scale-y-100 object-cover opacity-[0.14]"
+          style={{ maskImage: "linear-gradient(to top, black, transparent 55%)" }}
+        />
+      </span>
+      {spotlight && (
+        <span
+          className="absolute -top-2.5 left-1/2 flex max-w-full -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-spill px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-house shadow-[0_3px_10px_rgba(0,0,0,0.5)] @[120px]:px-2.5"
+          title="Spotlight"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden className="shrink-0">
+            <path d="M6 1l1.4 3.1 3.4.3-2.6 2.2.8 3.3L6 8.2 3 9.9l.8-3.3L1.2 4.4l3.4-.3z" fill="currentColor" />
+          </svg>
+          <span className="sr-only @[120px]:not-sr-only">Spotlight</span>
+        </span>
+      )}
+      {mine && (
+        <span className="absolute bottom-1.5 left-1.5 rounded-full bg-monad-deep px-2 py-0.5 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+          Yours
+        </span>
+      )}
+    </>
+  );
 
   return (
-    <li className="group @container relative min-w-0 flex-1 basis-0" style={{ "--gel": gel, maxWidth: maxTile } as CSSProperties}>
+    <li ref={tileRef} className="@container relative min-w-0 shrink-0" style={{ "--gel": gel, width, maxWidth: maxTile } as CSSProperties}>
       {beam && (
         <div
           aria-hidden
@@ -252,74 +369,98 @@ function StageTile({
           style={{
             background: featured
               ? "linear-gradient(to bottom, transparent, color-mix(in oklab, var(--monad-hi) 34%, transparent))"
-              : "linear-gradient(to bottom, transparent, color-mix(in oklab, var(--spill) 26%, transparent))",
+              : "linear-gradient(to bottom, transparent, color-mix(in oklab, var(--spill) 30%, transparent))",
             clipPath: "polygon(44% 0, 56% 0, 100% 100%, 0 100%)",
             filter: "blur(6px)",
           }}
         />
       )}
 
-      <div className="relative">
-        {/* Floor pool: the light the Chog throws on the stage when it plays. */}
-        <div
-          aria-hidden
-          data-pool={id}
-          className="pointer-events-none absolute -bottom-4 left-1/2 h-7 w-[130%] -translate-x-1/2 rounded-[50%] opacity-30"
-          style={{ background: `radial-gradient(closest-side, ${gel}, transparent)` }}
-        />
-        <div
-          aria-hidden
-          data-glow={id}
-          className="pointer-events-none absolute -inset-1 rounded-[20px] opacity-0"
-          style={{ boxShadow: `0 0 0 2px ${gel}, 0 10px 30px 2px color-mix(in oklab, ${gel} 65%, transparent)` }}
-        />
-        {/* eslint-disable-next-line @next/next/no-img-element -- IPFS portraits, no Next image config yet */}
-        <img
-          data-portrait={id}
-          src={chogImageUrl(seat.chog)}
-          alt={`${seat.chog.name}, ${meta.label.toLowerCase()}${spotlight ? ", Spotlight" : ""}${mine ? ", yours" : ""}`}
-          width={240}
-          height={240}
-          loading="lazy"
-          className={`relative aspect-square w-full rounded-[18px] bg-house-3 object-cover shadow-[0_14px_28px_-12px_rgba(0,0,0,0.9)] ${featured ? "ring-2 ring-monad-hi ring-offset-2 ring-offset-[#0d0919]" : ""} ${preview ? "outline-2 outline-dashed outline-offset-2 outline-ink-3" : ""} ${earlier && !preview ? "saturate-[0.7]" : ""}`}
-        />
-        {spotlight && (
-          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-spill px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-house shadow-[0_3px_10px_rgba(0,0,0,0.5)]">
-            Spotlight
-          </span>
-        )}
-        {mine && (
-          <span className="absolute bottom-1.5 left-1.5 rounded-full bg-monad-deep px-2 py-0.5 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-            Yours
-          </span>
-        )}
-      </div>
-
-      <div className="mt-3 min-w-0 text-center">
-        <p className="truncate text-xs font-medium leading-tight text-ink" title={`${seat.chog.name} (tokenId ${id})`}>
-          {seat.chog.name}
-        </p>
-        <p className="tabular truncate text-[11px] leading-tight text-ink-3">
-          {preview ? "Preview, not onchain" : earlier ? "Earlier part" : career ? `${career.applause.toString()} applause` : " "}
-          {!preview && career && career.streak > 1 ? ` · ${career.streak} streak` : ""}
-        </p>
-      </div>
-
-      {canAct && (
-        <div className="mt-2 flex flex-wrap justify-center gap-1">
-          {seat.partThisMovement && <ApplaudButton tokenId={id} applauded={applauded} />}
-          <button
-            onClick={() => setTipOpen((o) => !o)}
-            aria-expanded={tipOpen}
-            aria-label={`Tip ${seat.chog.name} in $CHOG`}
-            className="h-8 whitespace-nowrap rounded-full bg-house-3 px-3 text-xs font-medium text-ink-2 transition hover:bg-line hover:text-ink active:scale-95"
-          >
-            Tip<span className="hidden @[118px]:inline"> $CHOG</span>
-          </button>
-        </div>
+      {canAct ? (
+        <button
+          onClick={toggle}
+          aria-expanded={open}
+          aria-label={`${alt}. Applaud or tip`}
+          className="relative block w-full rounded-[18px] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:-translate-y-0.5 motion-reduce:transform-none"
+        >
+          {portrait}
+        </button>
+      ) : (
+        <div className="relative">{portrait}</div>
       )}
-      {canAct && tipOpen && <TipTray tokenId={id} name={seat.chog.name} movement={movement} onClose={() => setTipOpen(false)} />}
+
+      <div className="relative mt-3 min-w-0 text-center">
+        <p className="truncate text-xs font-medium leading-tight text-ink" title={`${seat.chog.name} (tokenId ${id})`}>
+          {shortName}
+        </p>
+        <p
+          className="tabular truncate text-[11px] leading-tight text-ink-3"
+          title={career ? `${career.applause} applause, ${career.streak}-movement streak` : undefined}
+        >
+          {preview ? "Preview, not onchain" : earlier ? "Earlier part" : career ? `${career.applause.toString()} applause` : " "}
+        </p>
+      </div>
+
+      {canAct && open && (
+        <ActionsPanel
+          tokenId={id}
+          name={seat.chog.name}
+          gel={gel}
+          align={align}
+          canApplaud={seat.partThisMovement}
+          applauded={applauded}
+          movement={movement}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </li>
+  );
+}
+
+/** One anchored place for a Chog's audience actions: applause and a $CHOG tip. */
+function ActionsPanel({
+  tokenId,
+  name,
+  gel,
+  align,
+  canApplaud,
+  applauded,
+  movement,
+  onClose,
+}: {
+  tokenId: number;
+  name: string;
+  gel: string;
+  align: "center" | "left" | "right";
+  canApplaud: boolean;
+  applauded: boolean;
+  movement: number;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-label={`Applaud or tip ${name}`}
+      className={`absolute top-full z-40 mt-2 w-64 rounded-2xl bg-house-3 p-3 ${align === "left" ? "left-0" : align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"}`}
+      style={{ boxShadow: `0 18px 40px -10px rgba(0,0,0,0.9), inset 0 2px 0 ${gel}` }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="truncate font-display text-base font-extrabold uppercase tracking-wide text-ink">{name}</p>
+        <button onClick={onClose} aria-label="Close" className="h-8 w-8 shrink-0 rounded-full text-ink-3 hover:bg-line hover:text-ink">
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden className="mx-auto">
+            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+      {canApplaud ? (
+        <div className="mt-2">
+          <ApplaudButton tokenId={tokenId} applauded={applauded} />
+        </div>
+      ) : (
+        <p className="mt-2 text-[11px] text-ink-3">This part is from an earlier movement, so applause opens when it performs again.</p>
+      )}
+      <TipForm tokenId={tokenId} movement={movement} />
+    </div>
   );
 }
 
@@ -350,8 +491,9 @@ function ApplaudButton({ tokenId, applauded }: { tokenId: number; applauded: boo
     <div className="relative">
       <button
         disabled={done || tx.busy}
+        style={{ width: "100%" }}
         onClick={() => tx.send({ address: ADDRESSES.chogstra!, abi: chogstraAbi, functionName: "applaud", args: [BigInt(tokenId)] })}
-        className={`h-8 rounded-full px-3 text-xs font-semibold transition active:scale-95 ${done ? "bg-transparent text-ink-3" : "bg-monad-deep text-white hover:bg-monad"} disabled:cursor-default ${tx.busy ? "animate-pulse" : ""}`}
+        className={`h-8 rounded-full px-3 text-xs font-semibold transition active:scale-95 ${done ? "bg-transparent text-ink-3" : "bg-monad-deep text-white hover:bg-monad-press"} disabled:cursor-default ${tx.busy ? "animate-pulse motion-reduce:animate-none" : ""}`}
       >
         {done ? "Applauded" : tx.busy ? "Clapping…" : "Applaud"}
       </button>
@@ -365,7 +507,7 @@ function ApplaudButton({ tokenId, applauded }: { tokenId: number; applauded: boo
   );
 }
 
-function TipTray({ tokenId, name, movement, onClose }: { tokenId: number; name: string; movement: number; onClose: () => void }) {
+function TipForm({ tokenId, movement }: { tokenId: number; movement: number }) {
   const { address } = useAccount();
   const balance = useChogBalance(address);
   const approveTx = useTx();
@@ -394,15 +536,8 @@ function TipTray({ tokenId, name, movement, onClose }: { tokenId: number; name: 
   }
 
   return (
-    <div className="absolute left-1/2 top-full z-30 mt-2 w-64 -translate-x-1/2 rounded-2xl bg-house-3 p-3 shadow-[0_18px_40px_-10px_rgba(0,0,0,0.9)]">
-      <div className="flex items-center justify-between">
-        <p className="truncate font-display text-base font-extrabold uppercase tracking-wide text-ink">Tip {name}</p>
-        <button onClick={onClose} aria-label="Close tip" className="rounded-full px-2 text-ink-3 hover:text-ink">
-          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
-            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          </svg>
-        </button>
-      </div>
+    <div className="mt-3 border-t border-line pt-3">
+      <p className="text-xs font-medium text-ink-2">Tip in $CHOG</p>
       <div className="mt-2 flex items-center gap-2">
         <label className="flex flex-1 items-center rounded-full bg-house px-3 py-1.5 focus-within:ring-2 focus-within:ring-monad">
           <input
@@ -418,7 +553,7 @@ function TipTray({ tokenId, name, movement, onClose }: { tokenId: number; name: 
           <button
             onClick={tip}
             disabled={!enough || busy}
-            className="h-9 rounded-full bg-monad-deep px-4 text-sm font-semibold text-white transition hover:bg-monad active:scale-95 disabled:opacity-40"
+            className="h-9 rounded-full bg-monad-deep px-4 text-sm font-semibold text-white transition hover:bg-monad-press active:scale-95 disabled:opacity-40"
           >
             {busy ? "…" : "Tip"}
           </button>

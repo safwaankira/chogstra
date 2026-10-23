@@ -1,0 +1,621 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-23T19:10:00Z",
+  "title": "Design System: CHOGSTRA",
+  "extensions": {
+    "colorMeta": {
+      "house": {
+        "role": "neutral",
+        "displayName": "House",
+        "canonical": "#0b0814",
+        "tonalRamp": [
+          "#0c0915",
+          "#252230",
+          "#403d4c",
+          "#5e5b6b",
+          "#7e7a8c",
+          "#9f9cad",
+          "#c5c1d4",
+          "#efebff"
+        ]
+      },
+      "house-2": {
+        "role": "neutral",
+        "displayName": "House Raised",
+        "canonical": "#120c22",
+        "tonalRamp": [
+          "#0d071c",
+          "#252037",
+          "#413b55",
+          "#5f5975",
+          "#7e7996",
+          "#9f9ab8",
+          "#c5bfdf",
+          "#efecfe"
+        ]
+      },
+      "house-3": {
+        "role": "neutral",
+        "displayName": "House Lifted",
+        "canonical": "#1b1333",
+        "tonalRamp": [
+          "#0d0422",
+          "#251e3f",
+          "#403a5d",
+          "#5e577d",
+          "#7e779f",
+          "#9f98c2",
+          "#c4bee9",
+          "#eeecfe"
+        ]
+      },
+      "stage-floor": {
+        "role": "neutral",
+        "displayName": "Stage Floor",
+        "canonical": "#0d0919",
+        "tonalRamp": [
+          "#0c0818",
+          "#252133",
+          "#403c50",
+          "#5e5a6f",
+          "#7e7a90",
+          "#9f9bb2",
+          "#c5c0d8",
+          "#efecfe"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#2a2045",
+        "tonalRamp": [
+          "#0e0324",
+          "#261c41",
+          "#423860",
+          "#605680",
+          "#7f76a2",
+          "#a097c5",
+          "#c6bcec",
+          "#efecfe"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#f4efff",
+        "tonalRamp": [
+          "#0d0913",
+          "#26222d",
+          "#413d4a",
+          "#5f5b68",
+          "#7f7b89",
+          "#a09caa",
+          "#c6c1d1",
+          "#f0ebfb"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink Soft",
+        "canonical": "#c9bfe6",
+        "tonalRamp": [
+          "#0e051f",
+          "#271e3b",
+          "#433959",
+          "#615779",
+          "#80779b",
+          "#a298bd",
+          "#c7bde4",
+          "#f0ebfe"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink Dim",
+        "canonical": "#9a8fbd",
+        "tonalRamp": [
+          "#0f0324",
+          "#271c41",
+          "#433860",
+          "#615680",
+          "#8075a2",
+          "#a196c5",
+          "#c7bcec",
+          "#efebfe"
+        ]
+      },
+      "monad": {
+        "role": "primary",
+        "displayName": "Monad Stage Light",
+        "canonical": "#836ef9",
+        "tonalRamp": [
+          "#0c002d",
+          "#250564",
+          "#4112a1",
+          "#5b3ec6",
+          "#7862ec",
+          "#988df9",
+          "#bebcff",
+          "#edecff"
+        ]
+      },
+      "monad-hi": {
+        "role": "primary",
+        "displayName": "Monad High",
+        "canonical": "#a796ff",
+        "tonalRamp": [
+          "#0d002b",
+          "#280660",
+          "#422887",
+          "#5e49ab",
+          "#7d6acf",
+          "#9e8cf4",
+          "#c2bbfc",
+          "#eeecfe"
+        ]
+      },
+      "monad-deep": {
+        "role": "primary",
+        "displayName": "Monad Deep",
+        "canonical": "#6a55e8",
+        "tonalRamp": [
+          "#0a012c",
+          "#230169",
+          "#3e08a8",
+          "#573bce",
+          "#7360f4",
+          "#938ff9",
+          "#bcbdfe",
+          "#ecedff"
+        ],
+        "purpose": "Fill behind small white text: white on it is 5.2:1, where white on monad is 3.8:1 (large text only)."
+      },
+      "monad-press": {
+        "role": "primary",
+        "displayName": "Monad Press",
+        "canonical": "#5c47d6",
+        "tonalRamp": [
+          "#0b0721",
+          "#1c1353",
+          "#2d1e85",
+          "#3e29b8",
+          "#5c47d6",
+          "#897ae1",
+          "#b5acec",
+          "#e5e2f8"
+        ],
+        "purpose": "Fill behind small white text: white on it is 5.2:1, where white on monad is 3.8:1 (large text only)."
+      },
+      "spill": {
+        "role": "secondary",
+        "displayName": "Warm Spill",
+        "canonical": "#fff3e0",
+        "tonalRamp": [
+          "#110a01",
+          "#2b2314",
+          "#483e2f",
+          "#665c4c",
+          "#867c6b",
+          "#a89d8b",
+          "#cec2b0",
+          "#f9edda"
+        ]
+      },
+      "gel-drums": {
+        "role": "tertiary",
+        "displayName": "Drums Amber Gel",
+        "canonical": "#ffb547",
+        "tonalRamp": [
+          "#130900",
+          "#341f00",
+          "#583804",
+          "#7e540a",
+          "#a6711c",
+          "#d58d01",
+          "#fdb445",
+          "#feebd5"
+        ]
+      },
+      "gel-bass": {
+        "role": "tertiary",
+        "displayName": "Bass Pink Gel",
+        "canonical": "#ff6f9c",
+        "tonalRamp": [
+          "#1e0009",
+          "#47031f",
+          "#750b38",
+          "#a71754",
+          "#ce4273",
+          "#f56693",
+          "#fba9be",
+          "#fee8ed"
+        ]
+      },
+      "gel-chords": {
+        "role": "tertiary",
+        "displayName": "Chords Cyan Gel",
+        "canonical": "#62d4ff",
+        "tonalRamp": [
+          "#000d14",
+          "#022835",
+          "#09475a",
+          "#146782",
+          "#108aaf",
+          "#34add7",
+          "#62d4ff",
+          "#d9f3ff"
+        ]
+      },
+      "gel-melody": {
+        "role": "tertiary",
+        "displayName": "Melody Lime Gel",
+        "canonical": "#b8f36b",
+        "tonalRamp": [
+          "#060e00",
+          "#1a2a03",
+          "#30480a",
+          "#476a02",
+          "#618d14",
+          "#7bb21d",
+          "#a0d950",
+          "#d6feaa"
+        ]
+      },
+      "ok": {
+        "role": "status",
+        "displayName": "Confirmed",
+        "canonical": "#9ff0b4",
+        "tonalRamp": [
+          "#001004",
+          "#042c13",
+          "#014e24",
+          "#1a6f3b",
+          "#41905a",
+          "#63b37a",
+          "#89da9f",
+          "#cafed6"
+        ]
+      },
+      "warn": {
+        "role": "status",
+        "displayName": "Pending",
+        "canonical": "#ffcf6e",
+        "tonalRamp": [
+          "#110a00",
+          "#302102",
+          "#523c08",
+          "#765812",
+          "#9f7610",
+          "#c49630",
+          "#ecbc5b",
+          "#feeccc"
+        ]
+      },
+      "bad": {
+        "role": "status",
+        "displayName": "Error",
+        "canonical": "#ff8a8a",
+        "tonalRamp": [
+          "#1f0002",
+          "#4a020c",
+          "#79091c",
+          "#9e3339",
+          "#c35558",
+          "#e97778",
+          "#fbacaa",
+          "#ffe8e7"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Marquee",
+        "purpose": "\"Movement N\" in the marquee header, once per screen. Uppercase, number tabular in monad-hi."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Console heading, role name on the instrument card (in its gel), Spectate pitch, empty-stage call. Uppercase."
+      },
+      "title": {
+        "displayName": "Button Title",
+        "purpose": "Perform onchain and You need a Chog labels; at 1rem for Your part and panel names. Uppercase, wide tracking."
+      },
+      "stat": {
+        "displayName": "Stat",
+        "purpose": "Encore Pot, countdown, On stage. Tabular; 1.5rem below 640px. Units at 1rem/700 in ink-3."
+      },
+      "role-label": {
+        "displayName": "Role Label",
+        "purpose": "Role zone names on the risers next to a gel lamp dot."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Door, Spectate and empty-stage copy, max about 28rem."
+      },
+      "ui": {
+        "displayName": "UI",
+        "purpose": "Pills, chips, wallet bar, feed items, tile names."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Stat labels, captions, trait rows, fine print. 11px is the floor for functional text."
+      },
+      "mono": {
+        "displayName": "Machine Mono",
+        "purpose": "Addresses, hashes, block numbers, tip amounts, sequencer note names only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "portrait-drop",
+        "value": "0 14px 28px -12px rgba(0,0,0,0.9)",
+        "purpose": "Every Stage portrait; shadow falls onto the floor."
+      },
+      {
+        "name": "note-glow-ring",
+        "value": "0 0 0 2px var(--gel), 0 10px 30px 2px color-mix(in oklab, var(--gel) 65%, transparent)",
+        "purpose": "Halo that flashes on each note; resting opacity 0."
+      },
+      {
+        "name": "console",
+        "value": "inset 0 1px 0 rgba(255,255,255,0.07), 0 24px 48px -24px rgba(0,0,0,0.9)",
+        "purpose": "The desk surface."
+      },
+      {
+        "name": "floating-panel",
+        "value": "0 18px 40px -10px rgba(0,0,0,0.9), inset 0 2px 0 var(--gel)",
+        "purpose": "Actions panel with its role gel as top edge."
+      },
+      {
+        "name": "perform-light",
+        "value": "0 10px 30px -10px var(--monad)",
+        "purpose": "Perform onchain button."
+      },
+      {
+        "name": "enter-light",
+        "value": "0 18px 44px -14px var(--monad), 0 4px 12px rgba(0,0,0,0.5)",
+        "purpose": "Enter the hall CTA."
+      },
+      {
+        "name": "result-banner",
+        "value": "0 8px 24px -8px var(--monad)",
+        "purpose": "You are in Movement N banner."
+      },
+      {
+        "name": "lamp-dot",
+        "value": "0 2px 10px <gel>",
+        "purpose": "8px role lamps and console heading lamp."
+      },
+      {
+        "name": "badge-lift",
+        "value": "0 3px 10px rgba(0,0,0,0.5)",
+        "purpose": "Spotlight and Yours badges over portraits."
+      },
+      {
+        "name": "cell-lit",
+        "value": "0 2px 12px var(--gel)",
+        "purpose": "Lit sequencer cell."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Shared easing for note pulses, doors, sparks and feed-in."
+      },
+      {
+        "name": "note-pulse",
+        "value": "320ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Per real note: portrait scale 1.06/brightness 1.35 to rest, glow 1 to 0, pool 1 to 0.6, meter scaleY 1 to 0.18. Portrait scale skipped under reduced motion."
+      },
+      {
+        "name": "doors-open",
+        "value": "900ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Door panels translate out by 100%; 1ms under reduced motion."
+      },
+      {
+        "name": "beam-breathe",
+        "value": "5s ease-in-out infinite, opacity 0.55 to 0.85",
+        "purpose": "Spotlight beam; the only ambient loop. Off under reduced motion."
+      },
+      {
+        "name": "spark",
+        "value": "700ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Ten dots fly out and shrink on a confirmed applause (gel) or tip (spill). Off under reduced motion."
+      },
+      {
+        "name": "feed-in",
+        "value": "500ms cubic-bezier(0.16, 1, 0.3, 1), from opacity 0, -6px, blur 4px",
+        "purpose": "New feed items and the Result banner. Off under reduced motion."
+      },
+      {
+        "name": "count-up",
+        "value": "700ms cubic ease-out (1-(1-k)^3)",
+        "purpose": "Encore Pot to its new value; instant under reduced motion."
+      },
+      {
+        "name": "tile-lift",
+        "value": "200ms transform, translateY(-2px)",
+        "purpose": "Actionable tile hover and focus."
+      },
+      {
+        "name": "cell-transition",
+        "value": "150ms background-color, box-shadow",
+        "purpose": "Sequencer cell toggle."
+      },
+      {
+        "name": "playhead",
+        "value": "rAF, stepped per 16th note from the bar clock",
+        "purpose": "Gel column across the grid; hidden until audio runs."
+      },
+      {
+        "name": "press",
+        "value": "scale 0.95 pills / 0.98 Enter / 0.99 Perform",
+        "purpose": "Active feedback."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Perform Control",
+      "kind": "button",
+      "refersTo": "button-perform",
+      "description": "The one primary action in the console; writes the loop onchain.",
+      "html": "<button class=\"ds-perform\">Perform onchain</button><button class=\"ds-perform\" disabled>Perform onchain</button>",
+      "css": ".ds-perform{display:block;width:100%;margin-bottom:8px;border:0;border-radius:16px;padding:12px 0;background:var(--monad,#836ef9);color:#fff;font-family:'Big Shoulders',Impact,sans-serif;font-size:20px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;box-shadow:0 10px 30px -10px var(--monad,#836ef9);transition:transform .15s,box-shadow .15s;cursor:pointer}.ds-perform:hover{box-shadow:0 12px 36px -8px var(--monad,#836ef9)}.ds-perform:active{transform:scale(.99)}.ds-perform:focus-visible{outline:2px solid #a796ff;outline-offset:3px}.ds-perform:disabled{background:#1b1333;color:#9a8fbd;box-shadow:none;cursor:default}"
+    },
+    {
+      "name": "Enter the Hall",
+      "kind": "button",
+      "refersTo": "button-enter-hall",
+      "description": "Door CTA that starts audio on a tap.",
+      "html": "<button class=\"ds-enter\">Enter the hall</button>",
+      "css": ".ds-enter{border:0;border-radius:9999px;padding:20px 40px;background:#836ef9;color:#fff;font-family:'Big Shoulders',Impact,sans-serif;font-size:36px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;box-shadow:0 18px 44px -14px #836ef9,0 4px 12px rgba(0,0,0,.5);transition:transform .15s,box-shadow .15s;cursor:pointer}.ds-enter:hover{box-shadow:0 22px 52px -12px #836ef9,0 4px 12px rgba(0,0,0,.5)}.ds-enter:active{transform:scale(.98)}.ds-enter:focus-visible{outline:2px solid #a796ff;outline-offset:3px}"
+    },
+    {
+      "name": "Pill Button",
+      "kind": "button",
+      "refersTo": "button-pill",
+      "description": "Small white-label actions on Monad Deep: Connect, Applaud, Tip, selected picker.",
+      "html": "<button class=\"ds-pill\">Applaud</button> <button class=\"ds-quiet\">Load onchain part</button>",
+      "css": ".ds-pill,.ds-quiet{height:32px;border:0;border-radius:9999px;padding:0 16px;font-family:Geist,system-ui,sans-serif;font-size:12px;font-weight:600;transition:background-color .15s,transform .15s;cursor:pointer}.ds-pill{background:#6a55e8;color:#fff}.ds-pill:hover{background:#836ef9}.ds-pill:active,.ds-quiet:active{transform:scale(.95)}.ds-quiet{background:#1b1333;color:#c9bfe6;font-weight:400;padding:0 12px}.ds-quiet:hover{background:#2a2045;color:#f4efff}.ds-pill:focus-visible,.ds-quiet:focus-visible{outline:2px solid #a796ff;outline-offset:3px}"
+    },
+    {
+      "name": "Setting Chip",
+      "kind": "chip",
+      "refersTo": "chip-setting",
+      "description": "Key, mood and tempo beside the marquee title.",
+      "html": "<span class=\"ds-chip\"><span class=\"ds-chip-l\">Key</span> <b>Bb</b></span> <span class=\"ds-chip ds-chip-warn\"><i></i>Waiting for today's draw</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:6px;border-radius:9999px;padding:4px 12px;background:#1b1333;color:#c9bfe6;font:12px Geist,system-ui,sans-serif}.ds-chip b{color:#f4efff;font-weight:600}.ds-chip-l{color:#9a8fbd}.ds-chip-warn{background:rgba(255,207,110,.15);color:#ffcf6e}.ds-chip-warn i{width:6px;height:6px;border-radius:50%;background:#ffcf6e}"
+    },
+    {
+      "name": "Stage Tile",
+      "kind": "custom",
+      "refersTo": "stage",
+      "description": "A borderless lit portrait: floor pool, glow ring on the note, reflection, Spotlight badge.",
+      "html": "<div class=\"ds-stage\"><div class=\"ds-tile\" style=\"--gel:#62d4ff\"><div class=\"ds-beam\"></div><span class=\"ds-pool\"></span><span class=\"ds-ring\"></span><div class=\"ds-portrait\"></div><span class=\"ds-badge\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" aria-hidden=\"true\"><path d=\"M6 1l1.4 3.1 3.4.3-2.6 2.2.8 3.3L6 8.2 3 9.9l.8-3.3L1.2 4.4l3.4-.3z\" fill=\"currentColor\"/></svg>Spotlight</span><p class=\"ds-name\">#1469</p><p class=\"ds-cap\">3 applause</p></div></div>",
+      "css": ".ds-stage{position:relative;padding:72px 48px 40px;border-radius:28px;background:radial-gradient(60% 45% at 50% -8%,rgba(131,110,249,.34),transparent 70%),linear-gradient(to bottom,#0d0919 55%,#181029 70%,#08060f);display:flex;justify-content:center}.ds-tile{position:relative;width:150px;text-align:center}.ds-portrait{position:relative;aspect-ratio:1;border-radius:18px;background:linear-gradient(135deg,#2a2045,#1b1333);box-shadow:0 14px 28px -12px rgba(0,0,0,.9);transition:transform .2s}.ds-tile:hover .ds-portrait{transform:translateY(-2px)}.ds-pool{position:absolute;left:50%;top:calc(150px - 16px);width:135%;height:36px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,var(--gel),transparent);opacity:.6}.ds-ring{position:absolute;inset:-4px -4px auto;height:158px;border-radius:20px;box-shadow:0 0 0 2px var(--gel),0 10px 30px 2px color-mix(in oklab,var(--gel) 65%,transparent);opacity:0;animation:ds-note 1.33s infinite}.ds-tile:hover .ds-ring{opacity:1}@keyframes ds-note{0%{opacity:1}24%,100%{opacity:0}}.ds-beam{position:absolute;top:-72px;left:50%;width:150%;height:calc(72px + 70%);transform:translateX(-50%);background:linear-gradient(to bottom,transparent,rgba(255,243,224,.3));clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);filter:blur(6px);pointer-events:none}.ds-badge{display:flex;align-items:center;gap:4px;position:absolute;top:-10px;left:50%;transform:translateX(-50%);white-space:nowrap;border-radius:9999px;padding:2px 10px;background:#fff3e0;color:#0b0814;font:700 11px Geist,system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;box-shadow:0 3px 10px rgba(0,0,0,.5)}.ds-name{margin:14px 0 0;font:500 12px Geist,system-ui,sans-serif;color:#f4efff}.ds-cap{margin:0;font:11px Geist,system-ui,sans-serif;color:#9a8fbd}@media (prefers-reduced-motion:reduce){.ds-ring{animation:none}}"
+    },
+    {
+      "name": "Step Sequencer",
+      "kind": "custom",
+      "refersTo": "sequencer-cell",
+      "description": "16-step grid; lit cells take the role gel, downbeats are a shade lighter.",
+      "html": "<div class=\"ds-seq\" style=\"--gel:#ff6f9c\"><button></button><button></button><button class=\"on\"></button><button class=\"on\"></button><button></button><button></button><button class=\"on\"></button><button></button></div>",
+      "css": ".ds-seq{display:grid;grid-template-columns:repeat(8,28px);gap:3px}.ds-seq button{aspect-ratio:1;border:0;border-radius:5px;background:#1b1333;transition:background-color .15s,box-shadow .15s;cursor:pointer}.ds-seq button:nth-child(4n+1){background:rgba(42,32,69,.8)}.ds-seq button:hover{background:rgba(154,143,189,.4)}.ds-seq button.on{background:var(--gel);box-shadow:0 2px 12px var(--gel)}.ds-seq button:focus-visible{outline:2px solid #a796ff;outline-offset:3px}"
+    },
+    {
+      "name": "Tip Input",
+      "kind": "input",
+      "refersTo": "input-tip",
+      "description": "House pill well with a mono amount and a $CHOG unit.",
+      "html": "<label class=\"ds-tip\"><input value=\"10\" aria-label=\"Tip amount\"><span>$CHOG</span></label>",
+      "css": ".ds-tip{display:flex;align-items:center;width:180px;border-radius:9999px;padding:6px 12px;background:#0b0814}.ds-tip:focus-within{box-shadow:0 0 0 2px #836ef9}.ds-tip input{flex:1;min-width:0;border:0;background:transparent;outline:0;color:#f4efff;font:14px 'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}.ds-tip span{font:12px Geist,system-ui,sans-serif;color:#9a8fbd}"
+    },
+    {
+      "name": "Wallet Bar",
+      "kind": "nav",
+      "refersTo": "wallet-bar",
+      "description": "Connected wallet pill: mono address, $CHOG balance, Disconnect.",
+      "html": "<div class=\"ds-wallet\"><span class=\"ds-addr\">0xf39F\u20262266</span><span class=\"ds-bal\"><b>9,970</b> $CHOG</span><button>Disconnect</button></div>",
+      "css": ".ds-wallet{display:inline-flex;align-items:center;gap:12px;border-radius:9999px;padding:4px 6px 4px 12px;background:#120c22;font:12px Geist,system-ui,sans-serif}.ds-addr{font-family:'Geist Mono',ui-monospace,monospace;color:#f4efff}.ds-bal{color:#9a8fbd}.ds-bal b{font:400 12px 'Geist Mono',ui-monospace,monospace;color:#c9bfe6}.ds-wallet button{border:0;border-radius:9999px;padding:4px 10px;background:transparent;color:#9a8fbd;font:inherit;cursor:pointer;transition:background-color .15s,color .15s}.ds-wallet button:hover{background:#1b1333;color:#f4efff}.ds-wallet button:focus-visible{outline:2px solid #a796ff;outline-offset:3px}"
+    },
+    {
+      "name": "Console",
+      "kind": "card",
+      "refersTo": "console",
+      "description": "The desk beside the Stage: lamp heading, channel meter, role name in its gel.",
+      "html": "<aside class=\"ds-console\" style=\"--gel:#ff6f9c\"><h2><i></i>Your console</h2><div class=\"ds-inst\"><div class=\"ds-meter\"><span></span></div><div><p class=\"ds-role\">Bass</p><p class=\"ds-row\"><i></i>Retro Glass <em>mid range</em></p></div></div></aside>",
+      "css": ".ds-console{width:320px;border-radius:22px;padding:16px;background:linear-gradient(180deg,#1a1230,#110b20 40%,#0e0a1b);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 24px 48px -24px rgba(0,0,0,.9);color:#f4efff}.ds-console h2{display:flex;align-items:center;gap:8px;margin:0 0 12px;font:900 24px 'Big Shoulders',Impact,sans-serif;letter-spacing:.025em;text-transform:uppercase}.ds-console h2 i{width:10px;height:10px;border-radius:50%;background:#836ef9;box-shadow:0 2px 8px #836ef9}.ds-inst{display:flex;gap:12px}.ds-meter{position:relative;width:8px;height:96px;border-radius:9999px;background:#0b0814;overflow:hidden}.ds-meter span{position:absolute;inset:0;border-radius:9999px;transform-origin:bottom;transform:scaleY(.18);background:linear-gradient(to top,var(--gel),color-mix(in oklab,var(--gel) 40%,white))}.ds-role{margin:0;font:900 30px/1 'Big Shoulders',Impact,sans-serif;text-transform:uppercase;color:var(--gel)}.ds-row{display:flex;align-items:center;gap:6px;margin:8px 0 0;font:11px Geist,system-ui,sans-serif;color:#9a8fbd}.ds-row i{width:6px;height:6px;border-radius:50%;background:var(--gel)}.ds-row em{margin-left:8px;font-style:normal;color:#c9bfe6}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Hall at Night",
+    "overview": "CHOGSTRA is a concert hall after dark. The house is a deep purple-black; Monad purple hangs over it as the rig light; warm white spill marks whoever is in the Spotlight; and every Chog on the Stage throws light in its band role's gel colour each time it plays a note. Nothing on the main screen is a card in a grid. The Stage is a room with a lacquered floor and two risers, the portraits are lit objects standing on it, and the console beside it is the desk where a holder writes their part.\n\nDensity is concert-poster loud at the top (a marquee \"Movement N\" in condensed display caps) and instrument-quiet everywhere else: small Geist UI text, pill controls, hairline dividers. Light carries the hierarchy, not boxes. Radial washes, floor pools, glow rings, beams and reflections do the work that borders and shadows-on-cards do in a dashboard. Motion comes from the music. Pulses fire on real notes from the audio engine, and the only ambient loop is the Spotlight beam breathing.\n\nThe world rejects what PRODUCT.md names: generic SaaS dashboards, gradient hero sections, plain cards, emoji headings and walls of monospace.",
+    "keyCharacteristics": [
+      "Purple-black house surfaces stepped in three tones; light is the only accent material.",
+      "Monad purple is stage light and the primary action; warm spill is reserved for the Spotlight.",
+      "Four role gels (drums amber, bass pink, chords cyan, melody lime) are the only other hues, and each one always means its role.",
+      "Big Shoulders in uppercase for every marquee moment; Geist for UI; Geist Mono only for machine values.",
+      "Portraits are borderless lit objects: drop shadow, floor pool, glow ring on the note, reflection below.",
+      "Motion is driven by the song clock and fully respects reduced motion."
+    ],
+    "rules": [
+      {
+        "name": "The Stage Light Rule",
+        "body": "Purple is light, not paint. Surfaces stay house-dark; Monad purple appears as a wash, a lamp, a focus ring or the single primary action in view.",
+        "section": "colors"
+      },
+      {
+        "name": "The Gel Means Role Rule",
+        "body": "A gel colour always names a band role. Never use a gel for status, decoration or a second accent.",
+        "section": "colors"
+      },
+      {
+        "name": "The Small White Text Rule",
+        "body": "White text under display size sits on Monad Deep (5.2:1). Monad Stage Light carries white only on display-size CTA labels.",
+        "section": "colors"
+      },
+      {
+        "name": "The Spill Is Earned Rule",
+        "body": "Warm white spill marks the Spotlight. It is never a general highlight.",
+        "section": "colors"
+      },
+      {
+        "name": "The Marquee Rule",
+        "body": "Big Shoulders is always uppercase and always 700 or heavier. It sets headings, role names, stats and CTA labels, never running text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono Is For Machines Rule",
+        "body": "Geist Mono appears only on values a machine produced: addresses, hashes, block numbers, amounts and note names. Never for labels or prose.",
+        "section": "typography"
+      },
+      {
+        "name": "The Lit Object Rule",
+        "body": "A portrait has no decorative border. It stands on the floor with a drop shadow, a gel pool and a reflection. A ring or outline appears only as state: the Monad High ring for your featured Chog, a dashed Ink Dim outline for a preview that isn't onchain.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Light Falls Down Rule",
+        "body": "Shadows fall toward the floor (positive y, negative spread). Coloured glow comes only from Monad purple or a role gel.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep every surface on the house steps (house, house-2, house-3, stage-floor) and let Monad purple arrive as light: washes at 18\u201334%, lamps, focus rings and one primary action.",
+      "**Do** put small white text on Monad Deep (5.2:1); reserve Monad Stage Light fills behind white for display-size labels.",
+      "**Do** colour anything role-specific with its gel through the `--gel` custom property, so the tile, panel, sparks, meter, cells and playhead all agree.",
+      "**Do** light portraits instead of framing them: portrait drop, gel floor pool, glow ring on the note, 14% reflection.",
+      "**Do** drive pulses from real engine notes and the bar clock; gate every scale, translate and loop behind `prefers-reduced-motion`.",
+      "**Do** use Big Shoulders in uppercase at 700\u2013900 for marquee moments and Geist Mono only for addresses, hashes, amounts and note names, with tabular numbers on every changing figure.",
+      "**Do** keep functional text at 11px or larger and controls at 32px or taller."
+    ],
+    "donts": [
+      "**Don't** build the dashboard arrangement: a header of stat tiles over a grid of equal cards with a form in a sidebar.",
+      "**Don't** use gradient hero sections, gradient text, plain bordered cards, emoji headings or walls of monospace text.",
+      "**Don't** use a gel colour for anything but its role, or warm spill for anything but the Spotlight.",
+      "**Don't** put decorative borders on portraits; rings and outlines are state only (featured, preview).",
+      "**Don't** add idle ambient animation beyond the Spotlight beam; motion answers the music or the user.",
+      "**Don't** show a success state, count or badge that a confirmed transaction or real onchain read didn't produce."
+    ]
+  }
+}

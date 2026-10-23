@@ -59,7 +59,7 @@ function WalletBarClient() {
             key={c.uid}
             onClick={() => connect({ connector: c })}
             disabled={isPending}
-            className={`h-8 rounded-full px-4 text-xs font-semibold transition active:scale-95 ${c.id.startsWith("dev-") ? "text-warn/90 ring-1 ring-inset ring-warn/30 hover:bg-warn/10" : "bg-monad-deep text-white hover:bg-monad"}`}
+            className={`h-8 rounded-full px-4 text-xs font-semibold transition active:scale-95 ${c.id.startsWith("dev-") ? "text-warn/90 ring-1 ring-inset ring-warn/30 hover:bg-warn/10" : "bg-monad-deep text-white hover:bg-monad-press"}`}
           >
             {c.id === "injected" ? "Connect wallet" : c.name}
           </button>

@@ -21,7 +21,7 @@ STORY: You see and hear the band, understand that each Chog is an instrument pla
 
 FIRST VIEWPORT: A marquee header across the top: "Movement N" huge at the left; key, tempo and mood as chips; the live Encore Pot; a countdown. The Stage fills about 70% of the width: four role risers (drums, bass, chords, melody) with big portrait tiles. A composer console on the right, styled as a mixing desk. Before audio starts, the stage is dimmed under a centred "Enter the hall" door CTA.
 
-FORM: Pinned by the brief (dark concert hall), so no roll ran. Ordered-list position: n/a (brief-pinned). seed: none (unavailable)
+FORM: Brief-pinned (the user named the dark concert hall world, Monad purple accent and every first-viewport element), so concept-seed was never run and there is no ordered-list position. seed: none (unavailable)
 
 Signature interaction: portraits throw light on their notes. The tile's floor pool and halo pulse in its role colour, and the composer's playhead sweeps the step grid in time.
 

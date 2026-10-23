@@ -121,8 +121,8 @@ export function Composer({
       <InstrumentCard chog={chog} sound={sound} onchain={onchain} movement={movement} />
 
       <div>
-        <div className="mb-1.5 flex items-baseline justify-between gap-2">
-          <p className="font-display text-base font-extrabold uppercase tracking-wide text-ink">Your part</p>
+        <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 border-t border-line pt-3">
+          <p className="whitespace-nowrap font-display text-base font-extrabold uppercase tracking-wide text-ink">Your part</p>
           <p className="text-[11px] text-ink-3">
             16 steps, one note each, locked to <span className="text-ink-2">{scale.name}</span>
           </p>
@@ -159,7 +159,7 @@ export function Composer({
         {previewing && <p className="mt-1 text-[11px] text-ink-3">Only you hear the preview. Nothing is onchain until you perform.</p>}
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 border-t border-line pt-3">
         {noteCount > 0 && (
           <p className="text-xs text-ink-2">
             <span className="font-medium text-ink">{chog.name}</span> · {ROLE_META[sound.role].label.toLowerCase()} ·{" "}
@@ -170,7 +170,7 @@ export function Composer({
         <button
           onClick={perform}
           disabled={tx.busy || noteCount === 0}
-          className="w-full rounded-2xl bg-monad py-3 font-display text-xl font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_10px_30px_-10px_var(--monad)] transition hover:bg-monad-hi active:scale-[0.99] disabled:bg-house-3 disabled:text-ink-3 disabled:shadow-none"
+          className="w-full rounded-2xl bg-monad py-3 font-display text-xl font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_10px_30px_-10px_var(--monad)] transition hover:bg-monad-deep active:scale-[0.99] disabled:bg-house-3 disabled:text-ink-3 disabled:shadow-none"
         >
           {tx.busy ? "Performing…" : "Perform onchain"}
         </button>
@@ -184,7 +184,15 @@ export function Composer({
 function InstrumentCard({ chog, sound, onchain, movement }: { chog: Chog; sound: ChogSound; onchain: OnchainPart | undefined; movement: number }) {
   const meta = ROLE_META[sound.role];
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-3">
+      {/* Channel meter: jumps on every note this Chog plays in the song. */}
+      <div aria-hidden className="relative w-2 shrink-0 overflow-hidden rounded-full bg-house">
+        <span
+          data-meter={chog.tokenId}
+          className="absolute inset-0 block origin-bottom rounded-full"
+          style={{ transform: "scaleY(0.18)", background: `linear-gradient(to top, ${meta.gel}, color-mix(in oklab, ${meta.gel} 40%, white))` }}
+        />
+      </div>
       <div className="relative shrink-0">
         <div aria-hidden className="absolute -inset-3 rounded-[28px] opacity-50 blur-xl" style={{ background: `radial-gradient(closest-side, ${meta.gel}, transparent)` }} />
         {/* eslint-disable-next-line @next/next/no-img-element -- IPFS portraits */}
@@ -193,7 +201,7 @@ function InstrumentCard({ chog, sound, onchain, movement }: { chog: Chog; sound:
           alt={chog.name}
           width={128}
           height={128}
-          className="relative h-32 w-32 rounded-2xl bg-house-3 object-cover shadow-[0_12px_30px_-10px_rgba(0,0,0,0.9)] xl:h-36 xl:w-36"
+          className="relative h-24 w-24 rounded-2xl bg-house-3 object-cover shadow-[0_12px_30px_-10px_rgba(0,0,0,0.9)] sm:h-32 sm:w-32 xl:h-36 xl:w-36"
         />
       </div>
       <div className="min-w-0 flex-1">
@@ -204,8 +212,9 @@ function InstrumentCard({ chog, sound, onchain, movement }: { chog: Chog; sound:
         <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px] leading-snug">
           {translation(chog, sound).map(([trait, value, result]) => (
             <div key={trait} className="contents">
-              <dt className="truncate text-ink-3" title={`${trait}: ${value}`}>
-                {value}
+              <dt className="flex min-w-0 items-center gap-1.5 text-ink-3" title={`${trait}: ${value}`}>
+                <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: meta.gel, boxShadow: `0 1px 4px ${meta.gel}` }} />
+                <span className="truncate">{value}</span>
               </dt>
               <dd className="truncate text-ink-2">
                 <span aria-hidden className="text-ink-3">
@@ -363,7 +372,10 @@ function Playhead({ barClock }: { barClock: RefObject<BarClock> }) {
       ref={ref}
       aria-hidden
       className="pointer-events-none absolute left-0 top-0 z-10 rounded-md opacity-0"
-      style={{ background: "linear-gradient(to bottom, color-mix(in oklab, var(--spill) 22%, transparent), color-mix(in oklab, var(--spill) 6%, transparent))" }}
+      style={{
+        background: "linear-gradient(to bottom, color-mix(in oklab, var(--gel) 38%, transparent), color-mix(in oklab, var(--gel) 12%, transparent))",
+        boxShadow: "0 6px 18px -4px color-mix(in oklab, var(--gel) 55%, transparent)",
+      }}
     />
   );
 }

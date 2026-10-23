@@ -13,6 +13,7 @@
   --monad: #836ef9;
   --monad-hi: #a796ff;
   --monad-deep: #6a55e8; /* fill behind small white text: 5.2:1 */
+  --monad-press: #5c47d6; /* hover/press for those fills: 6.3:1, darker so contrast never drops */
   --spill: #fff3e0;
   --gel-drums: #ffb547;
   --gel-bass: #ff6f9c;
@@ -34,6 +35,7 @@
   --color-monad: var(--monad);
   --color-monad-hi: var(--monad-hi);
   --color-monad-deep: var(--monad-deep);
+  --color-monad-press: var(--monad-press);
   --color-spill: var(--spill);
   --color-gel-drums: var(--gel-drums);
   --color-gel-bass: var(--gel-bass);
