@@ -648,12 +648,37 @@ contract ChogstraTest is Test {
 
     // ------------------------------------------------------------------ gas: close + spotlight
 
-    /// Worst case for resolveSpotlight: nobody performed, so all 256 draws run.
+    uint256 internal constant MONAD_TX_GAS_LIMIT = 30_000_000;
+    uint256 internal constant MONAD_COLD_SLOAD_EXTRA = 6_000; // 8,100 on Monad vs 2,100 here
+
+    /// Worst case for resolveSpotlight: nobody performed, so all MAX_DRAWS draws run.
+    /// Checks the estimated Monad cost stays under half of Monad's 30M tx gas limit.
     function test_GasResolveSpotlightWorstCase() public {
         _tipPot(10 ether);
         _toMovement(1);
         _closeAndSeed(0, SEED);
+
+        uint256 g = gasleft();
         chogstra.resolveSpotlight(0);
+        uint256 used = g - gasleft();
+
+        // Each distinct tokenId drawn is one cold performedIn read; repeats are warm.
+        bool[1970] memory seen;
+        uint256 coldReads;
+        for (uint256 i = 0; i < chogstra.MAX_DRAWS(); i++) {
+            uint256 id = _drawAt(SEED, i);
+            if (!seen[id]) {
+                seen[id] = true;
+                coldReads++;
+            }
+        }
+        uint256 monadEstimate = used + coldReads * MONAD_COLD_SLOAD_EXTRA;
+        emit log_named_uint("draws", chogstra.MAX_DRAWS());
+        emit log_named_uint("distinct cold reads", coldReads);
+        emit log_named_uint("gas here (in-test, no tx base)", used);
+        emit log_named_uint("Monad estimate", monadEstimate);
+        assertLt(monadEstimate, MONAD_TX_GAS_LIMIT / 2, "over half of Monad's tx gas limit");
+        assertEq(chogstra.encorePot(1), 10 ether, "nobody drawn: pot rolled over");
     }
 
     /// Typical case: three performers drawn early, pot paid to three owners.

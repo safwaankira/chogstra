@@ -57,7 +57,11 @@ contract Chogstra is IEntropyConsumer {
 
     uint256 public constant COLLECTION_SIZE = 1969; // Chog Genesis tokenIds 1..1969
     uint256 public constant MAX_SPOTLIGHTS = 3;
-    uint256 public constant MAX_DRAWS = 256;
+    /// @dev 2048 draws find at least one of 5 performers ~99.5% of the time.
+    /// Worst case (nobody performed): ~4.3M gas in Foundry, ~12.2M on Monad once
+    /// its +6,000 per cold storage read is added (~1,270 distinct tokenIds get
+    /// read). That's under half of Monad's 30M per-transaction gas limit.
+    uint256 public constant MAX_DRAWS = 2048;
 
     // Musical setting. Movement 0 has no previous seed, so it uses these.
     uint8 public constant DEFAULT_KEY = 0; // C
