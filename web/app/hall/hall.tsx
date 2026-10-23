@@ -5,7 +5,7 @@ import { formatUnits } from "viem";
 import { useAccount } from "wagmi";
 import { ROTATE_EVERY_BARS, STAGE_SIZE, selectBand, type Candidate } from "@/lib/band";
 import { IS_LOCAL, RPC, chain } from "@/lib/chain";
-import { loadChogs, type Chog } from "@/lib/chogs";
+import { chogImageUrl, loadChogs, type Chog } from "@/lib/chogs";
 import type { BandEngine } from "@/lib/engine";
 import { chogSound, type Role } from "@/lib/mapping";
 import { DEFAULT_SETTING, KEY_NAMES, MOODS, scaleFor } from "@/lib/music";
@@ -240,6 +240,13 @@ export function Hall({ guest = false }: { guest?: boolean }) {
                       <span className="ml-2 font-mono text-xs font-normal text-white/70">
                         tx {performed.hash.slice(0, 8)}…{performed.hash.slice(-4)}
                       </span>
+                      <ShareCardButton
+                        chog={chogs.get(performed.tokenId)}
+                        pattern={hall.partsQ.data.get(performed.tokenId)?.pattern}
+                        movement={movement}
+                        settingText={`${KEY_NAMES[setting.keyIndex]} ${mood.scale} · ${setting.tempo} bpm · mood ${mood.name}`}
+                        hash={performed.hash}
+                      />
                     </p>
                   ) : address && seats.some((x) => !x.tags.includes("Yours")) && doors === "gone" ? (
                     <p className="rounded-full bg-house/85 px-3 py-1 text-xs text-ink-2">Tap a Chog to applaud or tip</p>
@@ -335,6 +342,60 @@ export function Hall({ guest = false }: { guest?: boolean }) {
         </aside>
       </div>
     </main>
+  );
+}
+
+/** Draws and downloads the Result share card (real Chog, real onchain loop, real tx). */
+function ShareCardButton({
+  chog,
+  pattern,
+  movement,
+  settingText,
+  hash,
+}: {
+  chog: Chog | undefined;
+  pattern: bigint | undefined;
+  movement: number;
+  settingText: string;
+  hash: string;
+}) {
+  const [state, setState] = useState<"idle" | "drawing" | "error">("idle");
+  if (!chog || pattern === undefined) return null;
+  const sound = chogSound(chog.tokenId, chog.traits);
+  async function share() {
+    setState("drawing");
+    try {
+      const { renderShareCard } = await import("@/lib/shareCard");
+      const gel = getComputedStyle(document.documentElement).getPropertyValue(`--gel-${sound.role}`).trim();
+      const blob = await renderShareCard({
+        imageUrl: chogImageUrl(chog!),
+        chogName: chog!.name,
+        role: sound.role,
+        gel,
+        pattern: pattern!,
+        movement,
+        settingText,
+        txHash: hash,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `chogstra-movement-${movement}-${chog!.tokenId}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      setState("idle");
+    } catch {
+      setState("error");
+    }
+  }
+  return (
+    <button
+      onClick={share}
+      disabled={state === "drawing"}
+      className="ml-3 h-7 rounded-full bg-white/15 px-3 text-xs font-semibold text-white transition hover:bg-white/25 disabled:opacity-60"
+    >
+      {state === "drawing" ? "Drawing…" : state === "error" ? "Card failed, retry" : "Share card"}
+    </button>
   );
 }
 

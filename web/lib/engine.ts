@@ -59,6 +59,21 @@ class Mixer {
 }
 
 function buildVoice(sound: ChogSound, mixer: Mixer, scale: Scale): Voice {
+  const voice = buildVoiceInner(sound, mixer, scale);
+  // Tone's mono synths throw if started twice at the same time, which a throttled
+  // tab's clock can do. Nudge a repeated start forward by 0.1ms instead.
+  let last = -Infinity;
+  return {
+    dispose: voice.dispose,
+    trigger(time, degree) {
+      const t = time <= last ? last + 1e-4 : time;
+      last = t;
+      voice.trigger(t, degree);
+    },
+  };
+}
+
+function buildVoiceInner(sound: ChogSound, mixer: Mixer, scale: Scale): Voice {
   const nodes: { dispose: () => void }[] = [];
   const keep = <T extends { dispose: () => unknown }>(n: T) => (nodes.push(n), n);
 
