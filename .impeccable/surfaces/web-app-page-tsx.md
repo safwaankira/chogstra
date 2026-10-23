@@ -25,4 +25,6 @@ FORM: Brief-pinned (the user named the dark concert hall world, Monad purple acc
 
 Signature interaction: portraits throw light on their notes. The tile's floor pool and halo pulse in its role colour, and the composer's playhead sweeps the step grid in time.
 
+Decision (2026-10-23, user): ship as is. The console keeps its current form (gel channel meter, LED trait rows, engraved sections) and is not restructured into a full mixing-desk channel strip for now. Future reviews should treat the FIRST VIEWPORT "styled as a mixing desk" promise as downgraded by the user, not as an uncited deviation. Revisit only if the user asks.
+
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
