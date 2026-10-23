@@ -1,26 +1,159 @@
 @import "tailwindcss";
 
+/* The hall: a purple-black house at night (design tokens), Monad purple as stage light,
+   warm white spill for spotlights, one gel colour per band role. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --house: #0b0814;
+  --house-2: #120c22;
+  --house-3: #1b1333;
+  --line: #2a2045;
+  --ink: #f4efff;
+  --ink-2: #c9bfe6;
+  --ink-3: #9a8fbd;
+  --monad: #836ef9;
+  --monad-hi: #a796ff;
+  --monad-deep: #6a55e8; /* fill behind small white text: 5.2:1 */
+  --spill: #fff3e0;
+  --gel-drums: #ffb547;
+  --gel-bass: #ff6f9c;
+  --gel-chords: #62d4ff;
+  --gel-melody: #b8f36b;
+  --ok: #9ff0b4;
+  --warn: #ffcf6e;
+  --bad: #ff8a8a;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-house: var(--house);
+  --color-house-2: var(--house-2);
+  --color-house-3: var(--house-3);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-monad: var(--monad);
+  --color-monad-hi: var(--monad-hi);
+  --color-monad-deep: var(--monad-deep);
+  --color-spill: var(--spill);
+  --color-gel-drums: var(--gel-drums);
+  --color-gel-bass: var(--gel-bass);
+  --color-gel-chords: var(--gel-chords);
+  --color-gel-melody: var(--gel-melody);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display-face);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--house);
+  color-scheme: dark;
+  scrollbar-color: var(--line) var(--house);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--house);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  caret-color: var(--monad-hi);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--monad) 55%, transparent);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--monad-hi);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+  border: 2px solid var(--house);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* House doors: two panels that slide apart when the hall opens. */
+@keyframes door-left {
+  to {
+    transform: translateX(-100%);
+  }
+}
+@keyframes door-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+.doors-open .door-left {
+  animation: door-left 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.doors-open .door-right {
+  animation: door-right 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Spotlight beam: a slow breathing cone of warm light. */
+@keyframes beam-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+.beam {
+  animation: beam-breathe 5s ease-in-out infinite;
+}
+
+/* Applause and tip success: a short burst of confetti sparks. */
+@keyframes spark {
+  from {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(0.2);
+    opacity: 0;
+  }
+}
+.spark {
+  animation: spark 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes feed-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+    filter: blur(4px);
+  }
+}
+.feed-in {
+  animation: feed-in 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beam,
+  .spark,
+  .feed-in {
+    animation: none;
+  }
+  .doors-open .door-left,
+  .doors-open .door-right {
+    animation-duration: 1ms;
+  }
 }

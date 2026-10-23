@@ -59,27 +59,31 @@ function WalletBarClient() {
             key={c.uid}
             onClick={() => connect({ connector: c })}
             disabled={isPending}
-            className={`rounded-full border px-4 py-1.5 font-mono text-xs ${c.id.startsWith("dev-") ? "border-amber-700 text-amber-300 hover:border-amber-400" : "border-neutral-600 hover:border-white"}`}
+            className={`h-8 rounded-full px-4 text-xs font-semibold transition active:scale-95 ${c.id.startsWith("dev-") ? "text-warn/90 ring-1 ring-inset ring-warn/30 hover:bg-warn/10" : "bg-monad-deep text-white hover:bg-monad"}`}
           >
             {c.id === "injected" ? "Connect wallet" : c.name}
           </button>
         ))}
-        {error && <span className="font-mono text-xs text-rose-400">{error.message.split("\n")[0]}</span>}
+        {error && <span className="text-xs text-bad">{error.message.split("\n")[0]}</span>}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
-      <span className="text-neutral-300">{short(address)}</span>
-      {IS_LOCAL && connector?.id.startsWith("dev-") && <span className="text-amber-300">{connector.name}</span>}
-      {balance.data && <span className="text-neutral-400">{Number(formatUnits(balance.data.balance, 18)).toLocaleString()} $CHOG</span>}
+    <div className="flex min-h-[30px] flex-wrap items-center gap-x-3 gap-y-1 rounded-full bg-house-2 py-1 pl-3 pr-1.5 text-xs">
+      <span className="font-mono text-ink">{short(address)}</span>
+      {IS_LOCAL && connector?.id.startsWith("dev-") && <span className="text-warn">{connector.name}</span>}
+      {balance.data && (
+        <span className="text-ink-3">
+          <span className="tabular font-mono text-ink-2">{Number(formatUnits(balance.data.balance, 18)).toLocaleString()}</span> $CHOG
+        </span>
+      )}
       {chainId !== chain.id && (
-        <button onClick={() => switchChain({ chainId: chain.id })} className="rounded-full border border-rose-500 px-3 py-1 text-rose-300">
+        <button onClick={() => switchChain({ chainId: chain.id })} className="rounded-full bg-bad/15 px-3 py-1 font-semibold text-bad">
           Switch to {chain.name}
         </button>
       )}
-      <button onClick={() => disconnect()} className="text-neutral-500 hover:text-white">
+      <button onClick={() => disconnect()} className="rounded-full px-2.5 py-1 text-ink-3 transition hover:bg-house-3 hover:text-ink">
         Disconnect
       </button>
     </div>

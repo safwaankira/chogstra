@@ -1,17 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { formatUnits } from "viem";
 import { useAccount } from "wagmi";
 import { ROTATE_EVERY_BARS, STAGE_SIZE, selectBand, type Candidate } from "@/lib/band";
 import { IS_LOCAL, RPC, chain } from "@/lib/chain";
 import { loadChogs, type Chog } from "@/lib/chogs";
 import type { BandEngine } from "@/lib/engine";
-import { chogSound } from "@/lib/mapping";
+import { chogSound, type Role } from "@/lib/mapping";
 import { DEFAULT_SETTING, KEY_NAMES, MOODS, scaleFor } from "@/lib/music";
-import { Composer, type Draft } from "./composer";
-import { StageCard, type StageSeat } from "./stage";
-import { useHall, useOwnedChogs, useOwnedParts, useStageDetails } from "./useHall";
+import { Composer, type BarClock, type Draft } from "./composer";
+import { Silhouette, Stage, type StageSeat } from "./stage";
+import { useHall, useNextMovementIn, useOwnedChogs, useOwnedParts, useStageDetails } from "./useHall";
 import { WalletBar } from "./wallet";
 
 type Performed = { tokenId: number; movement: number; hash: string; by: string };
@@ -81,16 +81,31 @@ export function Hall() {
 
   // --- Audio -----------------------------------------------------------------
   const flash = useCallback((tokenId: number) => {
-    document.querySelectorAll(`[data-portrait="${tokenId}"]`).forEach((el) =>
-      el.animate([{ transform: "scale(1.12)", filter: "brightness(1.6)" }, { transform: "scale(1)", filter: "brightness(1)" }], {
-        duration: 260,
-        easing: "ease-out",
-      }),
-    );
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const opts = { duration: 320, easing: "cubic-bezier(0.16, 1, 0.3, 1)" };
+    if (!reduce) {
+      document.querySelectorAll(`[data-portrait="${tokenId}"]`).forEach((el) =>
+        el.animate([{ transform: "scale(1.06)", filter: "brightness(1.35)" }, { transform: "scale(1)", filter: "brightness(1)" }], opts),
+      );
+    }
+    document.querySelectorAll(`[data-glow="${tokenId}"]`).forEach((el) => el.animate([{ opacity: 1 }, { opacity: 0 }], opts));
+    document.querySelectorAll(`[data-pool="${tokenId}"]`).forEach((el) => el.animate([{ opacity: 1 }, { opacity: 0.3 }], opts));
   }, []);
-  const onBar = useCallback((bar: number) => setRotation(Math.floor((bar - 1) / ROTATE_EVERY_BARS)), []);
+  const barClock = useRef<BarClock>(null);
+  const tempoRef = useRef(tempo);
+  useEffect(() => {
+    tempoRef.current = tempo;
+  }, [tempo]);
+  const onBar = useCallback((bar: number) => {
+    barClock.current = { startedAt: performance.now(), stepMs: 60_000 / tempoRef.current / 4 };
+    setRotation(Math.floor((bar - 1) / ROTATE_EVERY_BARS));
+  }, []);
+
+  const [doors, setDoors] = useState<"closed" | "opening" | "gone">("closed");
+  const nextIn = useNextMovementIn(movement);
 
   async function enterHall() {
+    setDoors("opening");
     setAudio("starting");
     const { BandEngine } = await import("@/lib/engine");
     const engine = new BandEngine();
@@ -127,116 +142,146 @@ export function Hall() {
   // --- Render ----------------------------------------------------------------
   if (!hall.deployed) {
     return (
-      <Shell>
-        <p className="font-mono text-sm text-neutral-400">
-          Chogstra isn&apos;t deployed on {chain.name} yet (NEXT_PUBLIC_CHOGSTRA_ADDRESS is empty).
-          {IS_LOCAL && " Run scripts/dev-chain.sh, then restart the dev server."}
-        </p>
-      </Shell>
+      <Notice>
+        Chogstra isn&apos;t deployed on {chain.name} yet.
+        {IS_LOCAL && <span className="block text-ink-3">Run scripts/dev-chain.sh, then restart the dev server.</span>}
+      </Notice>
     );
   }
   if (hall.movementQ.isError) {
     return (
-      <Shell>
-        <p className="font-mono text-sm text-rose-400">Can&apos;t reach {chain.name} at {RPC}.</p>
-        {IS_LOCAL && <p className="mt-2 font-mono text-xs text-neutral-500">Is the dev chain running? Start it with scripts/dev-chain.sh.</p>}
-      </Shell>
+      <Notice tone="bad">
+        Can&apos;t reach {chain.name} at <span className="font-mono">{RPC}</span>.
+        {IS_LOCAL && <span className="block text-ink-3">Is the dev chain running? Start it with scripts/dev-chain.sh.</span>}
+      </Notice>
     );
   }
   if (loadError) {
-    return (
-      <Shell>
-        <p className="font-mono text-sm text-rose-400">Couldn&apos;t load Chog data: {loadError}</p>
-      </Shell>
-    );
+    return <Notice tone="bad">Couldn&apos;t load Chog data: {loadError}</Notice>;
   }
   if (!chogs || movement === undefined || !hall.settingQ.data || !hall.partsQ.data) {
-    return (
-      <Shell>
-        <p className="font-mono text-sm text-neutral-500">Opening the hall…</p>
-      </Shell>
-    );
+    return <Notice>Opening the hall…</Notice>;
   }
 
   const performerCount = [...hall.partsQ.data.values()].filter((p) => p.movement === movement).length;
   const youAreIn = performed && performed.movement === movement;
+  const mood = MOODS[setting.moodIndex];
+  const holdsChogs = !!address && !!owned.data && owned.data.length > 0;
 
   return (
-    <Shell>
-      <div className="mb-5 flex flex-wrap items-baseline gap-x-5 gap-y-1 font-mono text-xs text-neutral-400">
-        <span className="text-sm text-white">Movement {movement}</span>
-        <span>
-          {KEY_NAMES[setting.keyIndex]} {MOODS[setting.moodIndex].scale} · {setting.tempo} bpm · mood {MOODS[setting.moodIndex].name}
-        </span>
-        {waiting && <span className="text-amber-300">Waiting for today&apos;s draw (default setting)</span>}
-        <span>Encore Pot {hall.potQ.data !== undefined ? `${Number(formatUnits(hall.potQ.data, 18)).toLocaleString()} $CHOG` : "…"}</span>
-        <span>
-          {performerCount} performed this movement · {seats.length}/{STAGE_SIZE} on stage
-        </span>
-      </div>
-
-      {youAreIn && (
-        <div className="mb-5 rounded-lg border border-lime-700 bg-lime-950/40 p-3 font-mono text-sm text-lime-200">
-          You&apos;re in Movement {movement}. #{performed.tokenId} is on the Stage playing your part.
-          <span className="ml-2 text-xs text-lime-400/70">tx {performed.hash.slice(0, 10)}…{performed.hash.slice(-6)}</span>
-        </div>
-      )}
-
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
-        <section>
-          <div className="mb-3 flex flex-wrap items-center gap-3">
-            <h2 className="font-mono text-xs uppercase tracking-[0.3em] text-neutral-400">The Stage</h2>
-            {audio !== "on" && (
-              <button
-                onClick={enterHall}
-                disabled={audio === "starting"}
-                className="rounded-full bg-white px-5 py-2 font-mono text-sm text-black hover:bg-neutral-200 disabled:opacity-50"
-              >
-                {audio === "starting" ? "Starting audio…" : "Tap to enter the hall"}
-              </button>
-            )}
+    <main className="flex min-h-dvh flex-col gap-4 px-4 pb-4 pt-3 lg:h-dvh lg:overflow-hidden sm:px-6">
+      <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <p className="font-display text-lg font-black uppercase tracking-[0.28em] text-monad-hi">Chogstra</p>
+            <p className="hidden text-xs text-ink-3 sm:block">1,969 Chogs, one live song on {chain.name}</p>
           </div>
-
-          {hall.feed.length > 0 && (
-            <ul className="mb-3 flex flex-wrap gap-2 font-mono text-[11px] text-neutral-400">
-              {hall.feed.map((f) => (
-                <li key={f.id} className="rounded-full border border-neutral-800 px-2 py-0.5">
-                  #{f.tokenId} {f.kind === "joined" ? "just joined" : "rewrote their part"}
+          <div className="mt-1 flex flex-wrap items-end gap-x-5 gap-y-2">
+            <h1 className="font-display text-[clamp(2.75rem,6.2vw,5.5rem)] font-black uppercase leading-[0.82] tracking-[-0.01em] text-ink">
+              Movement <span className="tabular text-monad-hi">{movement}</span>
+            </h1>
+            <ul className="mb-1 flex flex-wrap gap-1.5" aria-label="This movement's setting">
+              <Chip label="Key" value={KEY_NAMES[setting.keyIndex]} />
+              <Chip label="Mood" value={`${mood.name}, ${mood.scale}`} />
+              <Chip label="Tempo" value={`${setting.tempo} bpm`} />
+              {waiting && (
+                <li className="flex items-center gap-1.5 rounded-full bg-warn/15 px-3 py-1 text-xs text-warn">
+                  <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-warn" />
+                  Waiting for today&apos;s draw
                 </li>
-              ))}
+              )}
             </ul>
-          )}
+          </div>
+        </div>
 
-          {seats.length === 0 ? (
-            <p className="font-mono text-sm text-neutral-500">Nobody has performed in Movement {movement} yet. The Stage is silent until someone does.</p>
-          ) : (
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {seats.map((seat) => (
-                <StageCard
-                  key={seat.chog.tokenId}
-                  seat={seat}
-                  owner={details.owners?.get(seat.chog.tokenId)}
-                  career={details.careers?.get(seat.chog.tokenId)}
-                  applauded={details.applauded?.has(seat.chog.tokenId) ?? false}
-                  movement={movement}
-                />
-              ))}
-            </ul>
-          )}
+        <div className="grid w-full grid-cols-3 items-end gap-x-4 gap-y-3 sm:flex sm:w-auto sm:flex-wrap sm:gap-x-7">
+          <Stat label="Encore Pot" unit="$CHOG">
+            {hall.potQ.data !== undefined ? <CountUp value={Number(formatUnits(hall.potQ.data, 18))} /> : "…"}
+          </Stat>
+          <Stat label="Next movement">{nextIn === null ? "…" : formatCountdown(nextIn)}</Stat>
+          <Stat label="On stage" unit={`/${STAGE_SIZE}`}>
+            {seats.length}
+          </Stat>
+          <div className="col-span-3 sm:col-span-1">
+            <WalletBar />
+          </div>
+        </div>
+      </header>
+
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,25rem)]">
+        <section aria-labelledby="stage-heading" className="relative min-h-0">
+          <h2 id="stage-heading" className="sr-only">
+            The Stage
+          </h2>
+          <p className="sr-only" aria-live="polite">
+            {audio === "on" ? `Sound on. ${seats.length} ${seats.length === 1 ? "Chog" : "Chogs"} playing in Movement ${movement}.` : ""}
+          </p>
+          <Stage
+            seats={seats}
+            details={details}
+            movement={movement}
+            featured={youAreIn ? performed.tokenId : undefined}
+            empty={<EmptyStage movement={movement} connected={!!address} holdsChogs={holdsChogs} />}
+            overlay={
+              <>
+                <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex flex-wrap items-start justify-between gap-2">
+                  {youAreIn ? (
+                    <p className="feed-in pointer-events-auto rounded-full bg-monad-deep px-4 py-1.5 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_var(--monad)]">
+                      You&apos;re in Movement {movement}. {chogs.get(performed.tokenId)?.name ?? `#${performed.tokenId}`} is playing your part.
+                      <span className="ml-2 font-mono text-xs font-normal text-white/70">
+                        tx {performed.hash.slice(0, 8)}…{performed.hash.slice(-4)}
+                      </span>
+                    </p>
+                  ) : (
+                    <span />
+                  )}
+                  {hall.feed.length > 0 && (
+                    <ul className="flex flex-wrap justify-end gap-1.5" aria-live="polite">
+                      {hall.feed.slice(0, 3).map((f, i) => (
+                        <li key={f.id} className={`feed-in rounded-full bg-house/85 px-3 py-1 text-xs text-ink-2 ${i > 0 ? "hidden md:block" : ""}`}>
+                          <span className="font-medium text-ink">{chogs.get(f.tokenId)?.name ?? `#${f.tokenId}`}</span>{" "}
+                          {f.kind === "joined" ? "just joined" : "rewrote their part"}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                {doors !== "gone" && (
+                  <HallDoors
+                    state={doors}
+                    starting={audio === "starting"}
+                    playing={seats.length}
+                    playedThisMovement={performerCount}
+                    movement={movement}
+                    onEnter={enterHall}
+                    onOpened={() => setDoors("gone")}
+                  />
+                )}
+              </>
+            }
+          />
         </section>
 
-        <section>
-          <h2 className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-neutral-400">Compose</h2>
+        <aside
+          aria-labelledby="console-heading"
+          className="flex min-h-0 flex-col rounded-[22px] bg-[linear-gradient(180deg,#1a1230,#110b20_40%,#0e0a1b)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_24px_48px_-24px_rgba(0,0,0,0.9)] lg:overflow-y-auto"
+        >
+          <h2 id="console-heading" className="mb-3 flex items-center gap-2 font-display text-2xl font-black uppercase tracking-wide text-ink">
+            <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-monad shadow-[0_2px_8px_var(--monad)]" />
+            Your console
+          </h2>
           {!address ? (
-            <Spectate reason="Connect a wallet that holds a Chog to write your part." />
+            <Spectate reason="Connect a wallet that holds a Chog to write its part." />
           ) : owned.isPending ? (
-            <p className="font-mono text-sm text-neutral-500">Finding your Chogs… checked {owned.progress} of 1,969</p>
+            <p className="text-sm text-ink-2">
+              Finding your Chogs… <span className="tabular font-mono text-ink-3">{owned.progress} / 1,969</span>
+            </p>
           ) : owned.isError ? (
-            <p className="font-mono text-sm text-rose-400">Couldn&apos;t check Chog ownership: {owned.error.message.split("\n")[0]}</p>
+            <p className="text-sm text-bad">Couldn&apos;t check Chog ownership: {owned.error.message.split("\n")[0]}</p>
           ) : owned.data.length === 0 ? (
             <Spectate reason="This wallet holds no Chogs. You can still listen, applaud and tip." />
           ) : !ownedParts.data ? (
-            <p className="font-mono text-sm text-neutral-500">Reading your Chogs&apos; parts…</p>
+            <p className="text-sm text-ink-2">Reading your Chogs&apos; parts…</p>
           ) : (
             <Composer
               key={address}
@@ -248,36 +293,165 @@ export function Hall() {
               previewing={preview !== null}
               onPreview={onPreview}
               onPerformed={onPerformed}
+              barClock={barClock}
             />
           )}
-        </section>
+        </aside>
       </div>
-    </Shell>
+    </main>
+  );
+}
+
+function Chip({ label, value }: { label: string; value: string }) {
+  return (
+    <li className="rounded-full bg-house-3 px-3 py-1 text-xs text-ink-2">
+      <span className="text-ink-3">{label}</span> <span className="font-semibold text-ink">{value}</span>
+    </li>
+  );
+}
+
+function Stat({ label, unit, children }: { label: string; unit?: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] text-ink-3">{label}</p>
+      <p className="tabular whitespace-nowrap font-display text-2xl font-extrabold leading-none text-ink sm:text-3xl">
+        {children}
+        {unit && <span className="ml-1 font-display text-base font-bold text-ink-3">{unit}</span>}
+      </p>
+    </div>
+  );
+}
+
+/** Counts up to a new value when the pot changes, so a tip is felt. */
+function CountUp({ value }: { value: number }) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+  useEffect(() => {
+    const start = from.current;
+    if (start === value) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const k = reduce ? 1 : Math.min(1, (t - t0) / 700);
+      const eased = 1 - Math.pow(1 - k, 3);
+      setShown(start + (value - start) * eased);
+      if (k < 1) raf = requestAnimationFrame(tick);
+      else from.current = value;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <>{shown.toLocaleString(undefined, { maximumFractionDigits: 2 })}</>;
+}
+
+function formatCountdown(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return [h, m, s].map((n) => String(n).padStart(2, "0")).join(":");
+}
+
+/** The house doors: translucent, so the dimmed band shows through until the visitor taps in (audio needs that tap). */
+function HallDoors({
+  state,
+  starting,
+  playing,
+  playedThisMovement,
+  movement,
+  onEnter,
+  onOpened,
+}: {
+  state: "closed" | "opening";
+  starting: boolean;
+  playing: number;
+  playedThisMovement: number;
+  movement: number;
+  onEnter: () => void;
+  onOpened: () => void;
+}) {
+  const held = playing - playedThisMovement;
+  const copy =
+    playing === 0
+      ? `The stage is set for Movement ${movement}. Nobody has played yet.`
+      : playedThisMovement === 0
+        ? `${held} Spotlight ${held === 1 ? "Chog is" : "Chogs are"} holding the stage with earlier parts. Nobody has played Movement ${movement} yet.`
+        : `${playing} ${playing === 1 ? "Chog is" : "Chogs are"} on stage, each playing a loop its holder wrote onchain.`;
+  const panel = "absolute inset-y-0 w-1/2 bg-[color-mix(in_oklab,#120b22_74%,transparent)] backdrop-blur-[3px]";
+  return (
+    <div className={`absolute inset-0 z-30 overflow-hidden rounded-[28px] ${state === "opening" ? "doors-open" : ""}`}>
+      <div aria-hidden className={`door-left left-0 ${panel}`} onAnimationEnd={onOpened} />
+      <div aria-hidden className={`door-right right-0 ${panel}`} />
+      {state === "closed" && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 p-6 text-center">
+          <p className="max-w-md text-sm text-ink-2">{copy}</p>
+          <button
+            onClick={onEnter}
+            disabled={starting}
+            className="whitespace-nowrap rounded-full bg-monad px-8 py-4 font-display text-2xl font-black uppercase tracking-[0.1em] text-white shadow-[0_18px_44px_-14px_var(--monad),0_4px_12px_rgba(0,0,0,0.5)] transition hover:bg-monad-hi active:scale-[0.98] sm:px-10 sm:py-5 sm:text-4xl sm:tracking-[0.14em]"
+          >
+            Enter the hall
+          </button>
+          <p className="text-xs text-ink-3">Tap to turn the sound on.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const ROLES_IN_ORDER: Role[] = ["drums", "bass", "chords", "melody"];
+
+function EmptyStage({ movement, connected, holdsChogs }: { movement: number; connected: boolean; holdsChogs: boolean }) {
+  return (
+    <div className="flex w-full max-w-2xl flex-col items-center text-center">
+      <ul className="mb-8 flex w-full items-end justify-around" aria-hidden>
+        {ROLES_IN_ORDER.map((role) => (
+          <li key={role} className="flex flex-col items-center gap-2">
+            <Silhouette role={role} className="h-16 w-16 text-ink-3/60 sm:h-20 sm:w-20" />
+            <span className="h-3 w-20 rounded-[50%] bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--monad)_35%,transparent),transparent)] sm:w-24" />
+            <span className="font-display text-xs font-extrabold uppercase tracking-[0.2em] text-ink-3">{role}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="font-display text-4xl font-black uppercase leading-none text-ink sm:text-5xl">Be the first to play</p>
+      <p className="mt-3 max-w-md text-sm text-ink-2">
+        {holdsChogs
+          ? `Movement ${movement} has no band yet. Write a loop in the console and perform it, and it starts with you.`
+          : connected
+            ? `Nobody has played Movement ${movement} yet. When a holder performs, you'll hear it here.`
+            : `Hold a Chog? Connect your wallet and write the first part of Movement ${movement}.`}
+      </p>
+    </div>
   );
 }
 
 function Spectate({ reason }: { reason: string }) {
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-neutral-400">{reason}</p>
-      <button disabled className="rounded-full bg-white px-6 py-2.5 font-mono text-sm text-black opacity-40">
+    <div className="flex flex-1 flex-col gap-4">
+      <p className="font-display text-3xl font-black uppercase leading-[0.95] text-ink">
+        Every Chog is <span className="text-monad-hi">an instrument</span>
+      </p>
+      <p className="text-sm leading-relaxed text-ink-2">
+        Its traits set the sound. Its holder writes a 16-step loop onchain, and every loop plays together as one song on Monad.
+      </p>
+      <p className="text-sm text-ink-3">{reason}</p>
+      <button disabled className="mt-auto w-full rounded-2xl bg-house-3 py-3 font-display text-xl font-extrabold uppercase tracking-[0.12em] text-ink-3">
         You need a Chog to play
       </button>
     </div>
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Notice({ children, tone }: { children: ReactNode; tone?: "bad" }) {
   return (
-    <main className="min-h-screen bg-[#07060a] px-4 py-6 text-neutral-200 sm:px-8">
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-mono text-sm uppercase tracking-[0.3em] text-white">Chogstra</h1>
-          <p className="font-mono text-xs text-neutral-500">1,969 Chogs, one live onchain song · {chain.name}</p>
-        </div>
+    <main className="flex min-h-dvh flex-col px-4 py-4 sm:px-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <p className="font-display text-lg font-black uppercase tracking-[0.28em] text-monad-hi">Chogstra</p>
         <WalletBar />
       </header>
-      {children}
+      <div className="flex flex-1 items-center justify-center">
+        <p className={`max-w-lg text-center text-base ${tone === "bad" ? "text-bad" : "text-ink-2"}`}>{children}</p>
+      </div>
     </main>
   );
 }

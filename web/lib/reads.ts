@@ -131,6 +131,15 @@ export async function readApplauded(client: PublicClient, movement: number, ids:
   return new Set(ids.filter((_, i) => results[i]));
 }
 
+/** The chain's own clock (the dev fork can run ahead of wall time) and Chogstra's start. */
+export async function readClock(client: PublicClient): Promise<{ startTime: number; chainTime: number }> {
+  const [startTime, block] = await Promise.all([
+    client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "startTime" }),
+    client.getBlock({ blockTag: "latest" }),
+  ]);
+  return { startTime: Number(startTime), chainTime: Number(block.timestamp) };
+}
+
 export async function readEncorePot(client: PublicClient, movement: number): Promise<bigint> {
   return client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "encorePot", args: [BigInt(movement)] });
 }

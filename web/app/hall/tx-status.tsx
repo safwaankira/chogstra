@@ -7,22 +7,31 @@ export function TxStatus({ state, verb }: { state: TxState; verb: string }) {
     case "idle":
       return null;
     case "estimating":
-      return <p className="font-mono text-xs text-neutral-400">Estimating gas…</p>;
+      return <p className="text-xs text-ink-3">Estimating gas…</p>;
     case "signing":
-      return <p className="font-mono text-xs text-neutral-300">Confirm {verb} in your wallet…</p>;
+      return <p className="text-xs text-ink-2">Confirm {verb} in your wallet…</p>;
     case "pending":
-      return <p className="font-mono text-xs text-amber-300">Pending · {short(state.hash)}</p>;
+      return (
+        <p className="text-xs text-warn">
+          Pending <span className="font-mono">{short(state.hash)}</span>
+        </p>
+      );
     case "confirmed":
       return (
-        <p className="font-mono text-xs text-lime-300">
-          Confirmed in block {state.blockNumber.toString()} · {short(state.hash)}
+        <p className="text-xs text-ok">
+          Confirmed in block <span className="tabular font-mono">{state.blockNumber.toString()}</span> · <span className="font-mono">{short(state.hash)}</span>
         </p>
       );
     case "error":
       return (
-        <p className="font-mono text-xs text-rose-400">
+        <p className="text-xs text-bad">
           {state.message}
-          {state.hash ? ` · ${short(state.hash)}` : ""}
+          {state.hash ? (
+            <>
+              {" "}
+              · <span className="font-mono">{short(state.hash)}</span>
+            </>
+          ) : null}
         </p>
       );
   }

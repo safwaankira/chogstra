@@ -12,6 +12,7 @@ import {
   readCareers,
   readChogAllowance,
   readChogBalance,
+  readClock,
   readEncorePot,
   readMovement,
   readOwners,
@@ -131,6 +132,34 @@ export function useHall() {
   }, [qc]);
 
   return { deployed, movementQ, movement, settingQ, partsQ, spotlightQ, potQ, feed: feed.filter((f) => f.movement === movement) };
+}
+
+/**
+ * Seconds until the next movement, by the chain's clock. The latest block's
+ * timestamp is re-read every 15s and advanced locally in between.
+ */
+export function useNextMovementIn(movement: number | undefined) {
+  const client = usePublicClient() as PublicClient;
+  const clock = useQuery({
+    queryKey: ["clock", movement],
+    queryFn: async () => ({ ...(await readClock(client)), fetchedAt: Date.now() }),
+    enabled: movement !== undefined && !!ADDRESSES.chogstra,
+    refetchInterval: 15_000,
+  });
+  // Wall time is read only in timer callbacks, never during render (prerender-safe).
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    const first = setTimeout(() => setNow(Date.now()), 0);
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
+  }, []);
+  if (!clock.data || movement === undefined || now === null) return null;
+  const chainNow = clock.data.chainTime + Math.max(0, (now - clock.data.fetchedAt) / 1000);
+  const nextStart = clock.data.startTime + (movement + 1) * 86_400;
+  return Math.max(0, Math.round(nextStart - chainNow));
 }
 
 /** Which tokenIds a wallet holds, found with a Multicall3 ownerOf sweep. Cached for the session. */
