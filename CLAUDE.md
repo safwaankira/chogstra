@@ -90,7 +90,7 @@ Everything runs on this Mac. Nothing is sent to Monad.
 ## Hosted demo (Monad testnet)
 - Live at https://chogstra.vercel.app (Vercel project safwaandks-projects/chogstra, deployed from `web/` with the user's approval). Build env: NEXT_PUBLIC_CHAIN_ID=10143 plus the addresses below.
 - Testnet contracts (from `contracts/script/DeployTestnet.s.sol`, block 73571287): Chogstra 0xc1a5423eb0889db0bbb6b93c8201ffdd8cc029d1, MockChog 0xb095539fab7515d308f86baea46b163df388255e (open mint, same tokenIds), mock $CHOG 0x19ba01858cd63875c3d9e4fb483261954a48856a, MockEntropyV2 0x92f863254fd45ed51b7768befa140996c7cd264a. Deployer 0xd1c1D7143C98fD823666b7BA626c900ff7C8f058 holds Chogs 1667, 61, 3, 4 and 10,000 mock $CHOG.
-- Daily draws need someone to call `closeMovement` and then `mockReveal` on MockEntropyV2 (Pyth Entropy's testnet address doesn't answer V2 calls).
+- Daily draws: once a movement ends, any connected visitor can run it from the header button (Close Movement N → Reveal the draw → Draw the Spotlight). The reveal step exists only with MockEntropyV2 (local fork, testnet), since Pyth Entropy's testnet address doesn't answer V2 calls; on mainnet Pyth calls back by itself.
 - The app reads contract state through Multicall3 (no log scans; public RPCs cap eth_getLogs at 100 blocks) and throttles RPC to 10 req/s (public limit is 15/s).
 
 ## Build order

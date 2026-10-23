@@ -13,6 +13,7 @@ import { DEFAULT_SETTING, KEY_NAMES, MOODS, scaleFor } from "@/lib/music";
 import { Composer, type BarClock, type Draft } from "./composer";
 import { Silhouette, Stage, type StageSeat } from "./stage";
 import { useHall, useLentChogs, useNextMovementIn, useOwnedChogs, useOwnedParts, useStageDetails } from "./useHall";
+import { DrawControl } from "./draw";
 import { WalletBar } from "./wallet";
 
 type Performed = { tokenId: number; movement: number; hash: string; by: string };
@@ -231,6 +232,7 @@ export function Hall({ guest = false }: { guest?: boolean }) {
                 Waiting for today&apos;s draw
               </li>
             )}
+            {movement > 0 && <DrawControl movement={movement - 1} />}
           </ul>
         </div>
 

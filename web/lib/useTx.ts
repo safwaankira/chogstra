@@ -22,6 +22,7 @@ export type WriteRequest<abi extends Abi, fn extends ContractFunctionName<abi, "
   abi: abi;
   functionName: fn;
   args: ContractFunctionArgs<abi, "nonpayable" | "payable", fn>;
+  value?: bigint;
 };
 
 export function errorMessage(err: unknown): string {
