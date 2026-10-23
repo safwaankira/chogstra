@@ -43,6 +43,26 @@ export const chain = IS_LOCAL
     });
 
 export const RPC = RPC_URL;
+// Public Monad RPCs allow about 15 requests per second per visitor. Every RPC request
+// from this page goes through one queue capped below that; the local fork is unthrottled.
+const MAX_REQUESTS_PER_SECOND = IS_LOCAL ? Infinity : 10;
+let recent: number[] = [];
+async function throttledFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  for (;;) {
+    const now = Date.now();
+    recent = recent.filter((t) => now - t < 1000);
+    if (recent.length < MAX_REQUESTS_PER_SECOND) {
+      recent.push(now);
+      return fetch(input, init);
+    }
+    await new Promise((r) => setTimeout(r, 1000 - (now - recent[0]) + 10));
+  }
+}
+
+/** Shared HTTP transport options: throttled, with patient retries on 429s. */
+export const RPC_TRANSPORT_OPTIONS = { fetchFn: throttledFetch, retryCount: 6, retryDelay: 600 } as const;
+/** How often hosted builds poll; the local fork can go faster. */
+export const POLL_MS = IS_LOCAL ? 1000 : 2500;
 export const WS = WS_URL;
 
 

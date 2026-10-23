@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPublicClient, http, webSocket, type Address, type PublicClient } from "viem";
 import { usePublicClient } from "wagmi";
 import { chogstraAbi } from "@/lib/abi/chogstra";
-import { ADDRESSES, RPC, WS, chain } from "@/lib/chain";
+import { ADDRESSES, IS_LOCAL, POLL_MS, RPC, RPC_TRANSPORT_OPTIONS, WS, chain } from "@/lib/chain";
 import {
   findOwnedChogs,
   readApplauded,
@@ -40,7 +40,7 @@ export function useHall() {
     queryKey: ["movement"],
     queryFn: () => readMovement(client),
     enabled: deployed,
-    refetchInterval: 3000,
+    refetchInterval: IS_LOCAL ? 3000 : 10_000,
   });
   const movement = movementQ.data;
   const ready = movement !== undefined;
@@ -90,7 +90,7 @@ export function useHall() {
 
   useEffect(() => {
     if (!ADDRESSES.chogstra) return;
-    const watcher = createPublicClient({ chain, transport: WS ? webSocket(WS) : http(RPC), pollingInterval: 1000 });
+    const watcher = createPublicClient({ chain, transport: WS ? webSocket(WS) : http(RPC, RPC_TRANSPORT_OPTIONS), pollingInterval: POLL_MS });
     const unwatch = watcher.watchContractEvent({
       address: ADDRESSES.chogstra,
       abi: chogstraAbi,

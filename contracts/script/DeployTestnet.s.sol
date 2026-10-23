@@ -23,7 +23,8 @@ contract DeployTestnet is Script {
 
     function run() external {
         vm.startBroadcast();
-        address deployer = msg.sender;
+        // The wallet actually broadcasting (msg.sender inside a script is the script contract's caller, not the signer).
+        (, address deployer,) = vm.readCallers();
 
         MockChog nft = new MockChog();
         MockCHOG token = new MockCHOG();

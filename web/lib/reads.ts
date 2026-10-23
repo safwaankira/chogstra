@@ -39,7 +39,7 @@ export async function readSetting(client: PublicClient, movement: number): Promi
 }
 
 const ALL_IDS = Array.from({ length: CHOG_COUNT }, (_, i) => i + 1);
-const STATE_BATCH = 300;
+const STATE_BATCH = 500; // 1,969 Chogs in 4 multicalls
 
 function batches<T>(items: T[], size = STATE_BATCH): T[][] {
   const out: T[][] = [];
@@ -190,7 +190,7 @@ export async function readChogAllowance(client: PublicClient, who: Address): Pro
   return client.readContract({ address: ADDRESSES.chogToken, abi: erc20Abi, functionName: "allowance", args: [who, chogstra()] });
 }
 
-const OWNER_SCAN_BATCH = 300;
+const OWNER_SCAN_BATCH = 500;
 
 /**
  * Chog Genesis isn't enumerable, so ask ownerOf for every tokenId 1..1969

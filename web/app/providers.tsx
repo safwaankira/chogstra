@@ -6,7 +6,10 @@ import { WagmiProvider } from "wagmi";
 import { config } from "@/lib/wagmi";
 
 export function Providers({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  // Public RPCs throttle bursts; retry chain reads patiently with backoff.
+  const [queryClient] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: 5, retryDelay: (n) => Math.min(1000 * 2 ** n, 15_000) } } }),
+  );
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

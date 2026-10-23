@@ -177,6 +177,16 @@ export function Hall({ guest = false }: { guest?: boolean }) {
   if (loadError) {
     return <Notice tone="bad">Couldn&apos;t load Chog data: {loadError}</Notice>;
   }
+  if (hall.partsQ.isError || hall.settingQ.isError) {
+    return (
+      <Notice tone="bad">
+        The chain is busy and didn&apos;t answer. Retrying…
+        <button onClick={() => (hall.partsQ.refetch(), hall.settingQ.refetch())} className="mt-3 block w-full text-sm text-ink-2 underline underline-offset-4">
+          Retry now
+        </button>
+      </Notice>
+    );
+  }
   if (!chogs || movement === undefined || !hall.settingQ.data || !hall.partsQ.data) {
     return <Notice>Opening the hall…</Notice>;
   }

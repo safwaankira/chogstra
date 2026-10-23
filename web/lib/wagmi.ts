@@ -1,7 +1,7 @@
 import { createConfig, createConnector, http } from "wagmi";
 import { injected, mock } from "wagmi/connectors";
 import type { Address } from "viem";
-import { DEV_ACCOUNTS, IS_LOCAL, MAINNET_CHAIN_ID, RPC, chain } from "./chain";
+import { DEV_ACCOUNTS, IS_LOCAL, MAINNET_CHAIN_ID, POLL_MS, RPC, RPC_TRANSPORT_OPTIONS, chain } from "./chain";
 
 /** One mock wallet per anvil test account. Sends go to anvil, which signs for its unlocked accounts. */
 function devAccount(address: Address, index: number) {
@@ -18,7 +18,8 @@ const devConnectors = IS_LOCAL && chain.id !== MAINNET_CHAIN_ID ? DEV_ACCOUNTS.m
 export const config = createConfig({
   chains: [chain],
   connectors: [injected(), ...devConnectors],
-  transports: { [chain.id]: http(RPC) } as Record<typeof chain.id, ReturnType<typeof http>>,
+  transports: { [chain.id]: http(RPC, RPC_TRANSPORT_OPTIONS) } as Record<typeof chain.id, ReturnType<typeof http>>,
+  pollingInterval: POLL_MS,
   ssr: true,
 });
 
