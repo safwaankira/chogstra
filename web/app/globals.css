@@ -159,3 +159,65 @@ body {
     animation-duration: 1ms;
   }
 }
+
+/* The console: heavy smoked glass with a beam of stage light crossing it,
+   and the lacquered floor catching its bottom edge. The glass blur is the
+   backdrop-* utilities on the element. */
+.console-desk {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  padding: 1.1rem 1rem 1.4rem;
+  border-radius: 22px;
+  background: rgb(11 8 20 / 0.7);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.09),
+    inset 0 -1px 0 rgb(131 110 249 / 0.35),
+    0 30px 60px -30px rgb(0 0 0 / 1);
+}
+@media (min-width: 1024px) {
+  .console-desk {
+    overflow-y: auto;
+  }
+}
+.console-desk::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 8%,
+    rgb(255 243 224 / 0.065) 22%,
+    rgb(131 110 249 / 0.11) 34%,
+    transparent 52%
+  );
+}
+.console-desk::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(167 150 255 / 0.7), transparent);
+  box-shadow: 0 4px 18px 2px rgb(131 110 249 / 0.35);
+}
+.console-desk-title {
+  margin-bottom: 0.9rem;
+  font-family: var(--font-display-face), var(--font-geist-sans), sans-serif;
+  font-weight: 900;
+  font-size: 1.9rem;
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  text-shadow:
+    0 1px 0 rgb(0 0 0 / 0.6),
+    0 2px 12px rgb(131 110 249 / 0.35);
+}

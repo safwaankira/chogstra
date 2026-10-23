@@ -316,12 +316,8 @@ export function Hall({ guest = false }: { guest?: boolean }) {
           />
         </section>
 
-        <aside
-          aria-labelledby="console-heading"
-          className="flex min-h-0 flex-col rounded-[22px] bg-[linear-gradient(180deg,#1a1230,#110b20_40%,#0e0a1b)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_24px_48px_-24px_rgba(0,0,0,0.9)] lg:overflow-y-auto"
-        >
-          <h2 id="console-heading" className="mb-3 flex items-center gap-2 font-display text-2xl font-black uppercase tracking-wide text-ink">
-            <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-monad shadow-[0_2px_8px_var(--monad)]" />
+        <aside aria-labelledby="console-heading" className="console-desk backdrop-blur-[26px] backdrop-brightness-90 backdrop-saturate-140">
+          <h2 id="console-heading" className="console-desk-title">
             Your console
           </h2>
           {guest ? (
