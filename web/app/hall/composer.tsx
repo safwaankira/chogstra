@@ -1,12 +1,15 @@
 "use client";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type RefObject } from "react";
+import type { PublicClient } from "viem";
+import { usePublicClient } from "wagmi";
 import { chogstraAbi } from "@/lib/abi/chogstra";
 import { ADDRESSES } from "@/lib/chain";
 import { chogImageUrl, type Chog } from "@/lib/chogs";
 import { FAMILY_TONE, ROLE_OCTAVE, chogSound, type ChogSound } from "@/lib/mapping";
 import { DRUM_PIECES, STEPS, decodePattern, degreeToMidi, encodePattern, noteName, type Scale, type Step } from "@/lib/music";
-import type { OnchainPart } from "@/lib/reads";
+import { readCareers, type Career, type OnchainPart } from "@/lib/reads";
 import { useTx } from "@/lib/useTx";
 import { DelegatePanel } from "./delegate";
 import { ROLE_META } from "./stage";
@@ -56,6 +59,13 @@ export function Composer({
   const [selected, setSelected] = useState<number>(ownedIds[0]);
   const [steps, setSteps] = useState<Step[]>(() => initialSteps(existingParts.get(ownedIds[0])));
   const tx = useTx();
+  const client = usePublicClient() as PublicClient;
+  const qc = useQueryClient();
+  const career = useQuery({
+    queryKey: ["career", selected],
+    queryFn: async () => (await readCareers(client, [selected])).get(selected)!,
+    enabled: !guest && !!ADDRESSES.chogstra,
+  });
 
   const chog = chogs.get(selected)!;
   const sound = chogSound(selected, chog.traits);
@@ -86,7 +96,10 @@ export function Composer({
       functionName: "perform",
       args: [BigInt(selected), pattern],
     });
-    if (receipt) onPerformed(selected, receipt.transactionHash);
+    if (receipt) {
+      qc.invalidateQueries({ queryKey: ["career", selected] });
+      onPerformed(selected, receipt.transactionHash);
+    }
   }
 
   const rowLabel = (degree: number) =>
@@ -216,10 +229,34 @@ export function Composer({
         </button>
         {guest && <p className="text-xs text-ink-3">Turn on Hear it in the song to play your loop with the live band. Holders perform onchain.</p>}
         {noteCount === 0 && !guest && <p className="text-xs text-ink-3">Light up at least one step to perform. Performing writes this loop onchain for this Movement.</p>}
+        {!guest && career.data && <StreakLine career={career.data} movement={movement} />}
         <TxStatus state={tx.state} verb="your performance" />
       </div>
       {!guest && !lentIds.includes(selected) && <DelegatePanel key={selected} tokenId={selected} />}
     </div>
+  );
+}
+
+/** Where this Chog's streak stands this Movement, straight from careers(tokenId). */
+function StreakLine({ career, movement }: { career: Career; movement: number }) {
+  const { performances, lastMovement, streak } = career;
+  const n = (k: number) => <span className="tabular font-semibold text-ink">{k}</span>;
+  let line;
+  if (performances === 0) line = <>No performances yet. Your first one starts a streak.</>;
+  else if (lastMovement === movement) line = <>Played this Movement. Streak: {n(streak)} {streak === 1 ? "movement" : "movements"} in a row.</>;
+  else if (lastMovement + 1 === movement)
+    line = (
+      <>
+        {n(streak)}-movement streak. Perform before this Movement ends to make it {n(streak + 1)}.
+      </>
+    );
+  else line = <>Streak ended after Movement {lastMovement}. Perform to start a new one.</>;
+  const live = performances > 0 && lastMovement + 1 === movement;
+  return (
+    <p className={`flex items-center gap-2 text-xs ${live ? "text-warn" : "text-ink-2"}`}>
+      <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${live ? "bg-warn" : lastMovement === movement && performances > 0 ? "bg-ok" : "bg-ink-3"}`} />
+      <span>{line}</span>
+    </p>
   );
 }
 
