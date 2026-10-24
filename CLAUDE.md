@@ -32,13 +32,13 @@ Solo vibecoded build for Chogathon 2026 (14-day sprint). Same repo will be poste
 ## Stack
 - Contracts: Foundry, Solidity ^0.8.24, OpenZeppelin.
 - Frontend: Next.js (App Router) + TypeScript, wagmi + viem, Tailwind, Tone.js for audio.
-- Wallet: Para (email/social) + injected wallets, via Monskills `wallet-integration`.
-- Indexing (later, day 8+): Envio HyperIndex via Monskills `indexer`.
+- Wallet: injected browser wallets only. No Para (decided 2026-10-24; /guest covers visitors without a wallet).
+- Indexing: none. No Envio or other hosted indexer (decided 2026-10-24); the app reads contract state via Multicall3.
 - Hosting: Vercel.
 
 ## Contract design (Chogstra.sol)
 - `perform(tokenId, uint64 pattern)`: caller must own the Chog or be a valid delegate. Writes only `parts[tokenId]` and `careers[tokenId]`. Emits `Performed`.
-- No global counters inside `perform` (keeps writes parallel-friendly on Monad). Totals come from the indexer.
+- No global counters inside `perform` (keeps writes parallel-friendly on Monad). Totals are read from contract state, not counted here.
 - Pattern = 16 steps × 4 bits (1 on/off bit + 3-bit scale degree).
 - Movements last 24h. `closeMovement()` is callable by anyone after 24h, requests Pyth Entropy; the callback sets next key/tempo/theme and picks Spotlight Chogs.
 - `delegate(tokenId, to, expiry)` lets an owner lend play rights to a friend. Delegation dies if the owner changes. (Nice-to-have; build after the core loop.)
@@ -101,4 +101,4 @@ Everything runs on this Mac. Nothing is sent to Monad.
 4. Stage playing real onchain parts.
 5. Entropy movement close, Spotlight.
 6. Mainnet deploy, /guest mode, provably fair Spotlight (Pyth Entropy).
-7. Indexer, leaderboards, $CHOG tips, share cards.
+7. Leaderboards, $CHOG tips, share cards.
