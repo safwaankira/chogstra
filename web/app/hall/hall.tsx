@@ -210,6 +210,9 @@ export function Hall({ guest = false }: { guest?: boolean }) {
           <Link href="/leaderboard" className="text-xs font-medium text-ink-2 underline-offset-4 hover:text-ink hover:underline">
             Leaderboard
           </Link>
+          <Link href="/fairness" className="text-xs font-medium text-ink-2 underline-offset-4 hover:text-ink hover:underline">
+            Fair draw
+          </Link>
           {!guest && (
             <Link href="/guest" className="text-xs font-medium text-ink-2 underline-offset-4 hover:text-ink hover:underline">
               Guest mode
@@ -278,6 +281,7 @@ export function Hall({ guest = false }: { guest?: boolean }) {
                         settingText={`${KEY_NAMES[setting.keyIndex]} ${mood.scale} · ${setting.tempo} bpm · mood ${mood.name}`}
                         hash={performed.hash}
                       />
+                      <ShareOnX chog={chogs.get(performed.tokenId)} movement={movement} />
                     </p>
                   ) : partsLoading ? (
                     <p className="rounded-full bg-house/85 px-3 py-1 text-xs text-ink-2">Tuning up: reading every Chog&apos;s part from the chain…</p>
@@ -430,6 +434,24 @@ function ShareCardButton({
     >
       {state === "drawing" ? "Drawing…" : state === "error" ? "Card failed, retry" : "Share card"}
     </button>
+  );
+}
+
+/** Opens X's composer with a post about this performance. The visitor writes and sends it themselves. */
+function ShareOnX({ chog, movement }: { chog: Chog | undefined; movement: number }) {
+  if (!chog) return null;
+  const role = chogSound(chog.tokenId, chog.traits).role;
+  const text = `${chog.name} just played ${role} in Movement ${movement} of CHOGSTRA: one live song, every part written onchain by a Chog holder on Monad.`;
+  const href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.origin)}`;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="ml-1.5 inline-flex h-7 items-center rounded-full bg-white/15 px-3 align-middle text-xs font-semibold text-white transition hover:bg-white/25"
+    >
+      Post on X
+    </a>
   );
 }
 
