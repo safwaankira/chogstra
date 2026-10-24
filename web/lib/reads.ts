@@ -1,7 +1,7 @@
 // Every read the hall makes from the chain. Nothing here is invented: each value
 // comes from Chogstra, Chog Genesis or $CHOG via the RPC.
 
-import { BaseError, ContractFunctionRevertedError, encodeAbiParameters, keccak256, type Address, type PublicClient } from "viem";
+import { BaseError, ContractFunctionRevertedError, encodeAbiParameters, keccak256, type Address, type Hex, type PublicClient } from "viem";
 import { chogstraAbi } from "./abi/chogstra";
 import { ADDRESSES, erc20Abi, erc721Abi } from "./chain";
 import { CHOG_COUNT } from "./chogs";
@@ -105,6 +105,10 @@ export async function readSpotlightIds(client: PublicClient, movement: number): 
   const [, , resolved] = await client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "closings", args: [movement] });
   if (!resolved) return [];
   const seed = await client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "seeds", args: [movement] });
+  return drawSpotlight(seed, await readPerformedIn(client, movement)).winners;
+}
+
+async function readPerformedIn(client: PublicClient, movement: number): Promise<Set<number>> {
   const performed = new Set<number>();
   for (const ids of batches(ALL_IDS)) {
     const res = await client.multicall({
@@ -113,12 +117,77 @@ export async function readSpotlightIds(client: PublicClient, movement: number): 
     });
     ids.forEach((id, i) => res[i] && performed.add(id));
   }
+  return performed;
+}
+
+/** One draw that landed on a Chog that performed (misses are only counted). */
+export type DrawHit = { draw: number; tokenId: number; kept: boolean };
+
+/** resolveSpotlight's loop, step by step. */
+export function drawSpotlight(seed: Hex, performed: Set<number>): { winners: number[]; hits: DrawHit[]; draws: number } {
   const winners: number[] = [];
-  for (let i = 0; i < MAX_DRAWS && winners.length < MAX_SPOTLIGHTS; i++) {
+  const hits: DrawHit[] = [];
+  let i = 0;
+  for (; i < MAX_DRAWS && winners.length < MAX_SPOTLIGHTS; i++) {
     const tokenId = Number(BigInt(keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "uint256" }], [seed, BigInt(i)]))) % BigInt(CHOG_COUNT)) + 1;
-    if (performed.has(tokenId) && !winners.includes(tokenId)) winners.push(tokenId);
+    if (!performed.has(tokenId)) continue;
+    const kept = !winners.includes(tokenId);
+    if (kept) winners.push(tokenId);
+    hits.push({ draw: i, tokenId, kept });
   }
-  return winners;
+  return { winners, hits, draws: i };
+}
+
+const MIN_TEMPO = 80;
+const MAX_TEMPO = 110;
+const MOOD_COUNT = 4;
+
+/** settingFor(movement + 1)'s formula, from the seed of `movement`. */
+export function settingFromSeed(seed: Hex): Setting {
+  const r = BigInt(keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "string" }], [seed, "setting"])));
+  return {
+    keyIndex: Number(r % BigInt(12)),
+    tempo: MIN_TEMPO + Number((r >> BigInt(64)) % BigInt(MAX_TEMPO - MIN_TEMPO + 1)),
+    moodIndex: Number((r >> BigInt(128)) % BigInt(MOOD_COUNT)),
+  };
+}
+
+export type DrawProof = {
+  movement: number;
+  closed: boolean;
+  seeded: boolean;
+  resolved: boolean;
+  sequence: bigint;
+  entropy: Address;
+  seed: Hex | null;
+  /** The next movement's setting as the contract reports it, and as recomputed here. */
+  settingOnchain: Setting | null;
+  settingHere: Setting | null;
+  performers: number;
+  draw: ReturnType<typeof drawSpotlight> | null;
+};
+
+/** Everything needed to check a movement's draw by hand, read from Chogstra. */
+export async function readDrawProof(client: PublicClient, movement: number): Promise<DrawProof> {
+  const [[closed, seeded, resolved, sequence], entropy] = await Promise.all([
+    client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "closings", args: [movement] }),
+    client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "entropy" }),
+  ]);
+  const base = { movement, closed, seeded, resolved, sequence, entropy };
+  if (!seeded) return { ...base, seed: null, settingOnchain: null, settingHere: null, performers: 0, draw: null };
+  const [seed, onchain, performed] = await Promise.all([
+    client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "seeds", args: [movement] }),
+    client.readContract({ address: chogstra(), abi: chogstraAbi, functionName: "settingFor", args: [movement + 1] }),
+    readPerformedIn(client, movement),
+  ]);
+  return {
+    ...base,
+    seed,
+    settingOnchain: { keyIndex: onchain[0], tempo: onchain[1], moodIndex: onchain[2] },
+    settingHere: settingFromSeed(seed),
+    performers: performed.size,
+    draw: drawSpotlight(seed, performed),
+  };
 }
 
 export async function readParts(client: PublicClient, ids: number[]): Promise<Map<number, OnchainPart>> {
